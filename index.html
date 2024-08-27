@@ -1,126 +1,126 @@
 <!doctype html>
-<html lang="en"> 
- <head> 
-  <meta charset="UTF-8"> 
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
-  <title>Admin Panel - Property Management</title> 
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Panel - Upload Property</title>
   <style>
     body {
       font-family: Arial, sans-serif;
       background-color: white;
-      margin: 0;
-      padding: 0;
       color: #002244;
-    }
-
-    header {
-      background-color: #002250;
-      color: white;
-      padding: 15px 20px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-wrap: wrap;
-    }
-
-    header img {
-      height: 50px;
-    }
-
-    nav {
-      display: flex;
-      gap: 10px;
-    }
-
-    nav a {
-      color: white;
-      text-decoration: none;
-      padding: 10px 15px;
-      display: block;
-      border-radius: 5px;
-      font-size: 14px;
-    }
-
-    nav a:hover {
-      background-color: #003366;
-    }
-
-    h1 {
-      text-align: center;
-      color: #002244;
-      margin: 20px 0;
-    }
-
-    .upload-section {
-      margin: 20px;
       padding: 20px;
-      border: 2px solid #002244;
+    }
+    .form-container {
+      max-width: 500px;
+      margin: auto;
+      padding: 20px;
+      border: 1px solid #ccc;
       border-radius: 10px;
       box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-      background-color: #f9f9f9;
     }
-
-    .upload-section input[type="file"] {
+    input, select, textarea {
+      width: 100%;
+      padding: 10px;
       margin: 10px 0;
+      border-radius: 5px;
+      border: 1px solid #002244;
     }
-
-    .upload-section button {
-      padding: 10px 15px;
+    button {
+      padding: 10px 20px;
       background-color: #002244;
       color: white;
       border: none;
       border-radius: 5px;
       cursor: pointer;
     }
+  </style>
+</head>
+<body>
 
-    .upload-section button:hover {
-      background-color: #003366;
+<div class="form-container">
+  <h2>Upload Property</h2>
+  
+  <label for="property-title">Property Title:</label>
+  <input type="text" id="property-title" placeholder="Enter property title">
+
+  <label for="property-description">Property Description:</label>
+  <textarea id="property-description" rows="4" placeholder="Enter property description"></textarea>
+
+  <label for="property-category">Category:</label>
+  <select id="property-category">
+    <option value="lands">Lands</option>
+    <option value="residential">Residential</option>
+    <option value="commercial">Commercial</option>
+    <option value="industrial">Industrial</option>
+    <option value="agriculture">Agriculture</option>
+    <option value="government">Government</option>
+  </select>
+
+  <label for="property-subcategory">Subcategory:</label>
+  <select id="property-subcategory">
+    <option value="residential-land">Residential Land</option>
+    <option value="apartment">Apartment</option>
+    <!-- Add other subcategories as needed -->
+  </select>
+
+  <label for="property-image">Property Image:</label>
+  <input type="file" id="property-image">
+
+  <button id="upload-button">Upload Property</button>
+</div>
+
+<script type="module">
+  // Initialize Supabase
+  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+
+  const supabaseUrl = 'https://cvdpmxkrqnpeozqypscy.supabase.co';
+  const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2ZHBteGtycW5wZW96cXlwc2N5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjQ1OTM1MTQsImV4cCI6MjA0MDE2OTUxNH0.6GlhIzxjR_VnsFwxHbCL417Q4rb3KDH8rNQ3_KExJuE';
+  const supabase = createClient(supabaseUrl, supabaseKey);
+
+  document.getElementById('upload-button').addEventListener('click', async () => {
+    const title = document.getElementById('property-title').value;
+    const description = document.getElementById('property-description').value;
+    const category = document.getElementById('property-category').value;
+    const subcategory = document.getElementById('property-subcategory').value;
+    const fileInput = document.getElementById('property-image');
+    const file = fileInput.files[0];
+
+    if (!title || !description || !category || !subcategory || !file) {
+      alert('Please fill all fields and select an image.');
+      return;
     }
-  </style> 
- </head> 
- <body> 
-  <header> 
-    <a href="index.html"><img src="https://i.postimg.cc/Bvdrr3NZ/IMG-20240817-175902.png" alt="Logo"></a> 
-    <nav> 
-      <a href="index.html">Home</a> 
-      <a href="property-listings.html">Listings</a> 
-      <a href="about-us.html">About Us</a> 
-    </nav> 
-  </header> 
-  <h1>Admin Panel - Upload Property Image</h1> 
-  <div class="upload-section"> 
-    <label for="propertyImage">Select Property Image:</label>
-    <input type="file" id="propertyImage" accept="image/*">
-    <button onclick="uploadImage()">Upload Image</button>
-  </div> 
-  <footer> 
-   <p>© 2024 Property Listings. All rights reserved.</p> 
-  </footer> 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-  <script>
-    const supabaseUrl = 'https://cvdpmxkrqnpeozqypscy.supabase.co';
-    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2ZHBteGtycW5wZW96cXlwc2N5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjQ1OTM1MTQsImV4cCI6MjA0MDE2OTUxNH0.6GlhIzxjR_VnsFwxHbCL417Q4rb3KDH8rNQ3_KExJuE';
-    const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
-    async function uploadImage() {
-      const fileInput = document.getElementById('propertyImage');
-      const file = fileInput.files[0];
-      if (!file) {
-        alert('Please select a file.');
-        return;
-      }
+    // Upload image to Supabase Storage
+    const { data, error } = await supabase
+      .storage
+      .from('property-images')
+      .upload(`public/${file.name}`, file);
 
-      const fileName = `${new Date().getTime()}_${file.name}`;
-      const { data, error } = await supabase.storage.from('property-images').upload(fileName, file);
-
-      if (error) {
-        console.error('Error uploading file:', error.message);
-        alert('Failed to upload image.');
-      } else {
-        alert('Image uploaded successfully!');
-        console.log('Uploaded file data:', data);
-      }
+    if (error) {
+      console.error('Error uploading image:', error);
+      alert('Error uploading image. Please try again.');
+      return;
     }
-  </script> 
+
+    const imageUrl = `${supabaseUrl}/storage/v1/object/public/property-images/${file.name}`;
+
+    // Store property details in Supabase Database
+    const { data: property, error: insertError } = await supabase
+      .from('properties')
+      .insert([
+        { title, description, category, subcategory, image_url: imageUrl }
+      ]);
+
+    if (insertError) {
+      console.error('Error saving property details:', insertError);
+      alert('Error saving property details. Please try again.');
+      return;
+    }
+
+    alert('Property uploaded successfully!');
+  });
+</script>
+
 </body>
 </html/>
