@@ -1,154 +1,136 @@
-<!doctype html>
+
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Panel - Upload Properties</title>
+    <title>Admin Panel</title>
     <style>
         body {
             font-family: Arial, sans-serif;
-            background-color: #f0f0f0;
+            background-color: #f4f4f4;
+            color: #333;
             margin: 0;
+            padding: 0;
+        }
+        .container {
+            width: 80%;
+            margin: auto;
+            overflow: hidden;
             padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
+            background: #fff;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            border-radius: 5px;
         }
         h1 {
+            text-align: center;
             color: #002244;
         }
         form {
-            background-color: #fff;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            width: 300px;
-            display: flex;
-            flex-direction: column;
+            margin: 0 auto;
+            width: 80%;
         }
-        label {
-            margin-bottom: 10px;
-            color: #002244;
-        }
-        input[type="text"], input[type="number"], input[type="file"] {
-            margin-bottom: 20px;
-            padding: 8px;
-            border-radius: 4px;
-            border: 1px solid #ccc;
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
         }
         button {
-            background-color: #002244;
-            color: white;
+            width: 100%;
             padding: 10px;
+            background-color: #002244;
+            color: #fff;
             border: none;
-            border-radius: 4px;
+            border-radius: 5px;
             cursor: pointer;
+            font-size: 16px;
         }
         button:hover {
-            background-color: #004488;
+            background-color: #001f3f;
+        }
+        .error {
+            color: red;
+            text-align: center;
+        }
+        .success {
+            color: green;
+            text-align: center;
         }
     </style>
 </head>
 <body>
-    <h1>Upload Property</h1>
-    <form id="property-form">
-        <label for="name">Property Name:</label>
-        <input type="text" id="name" required>
-        
-        <label for="category">Category:</label>
-        <input type="text" id="category" required>
-        
-        <label for="subcategory">Subcategory:</label>
-        <input type="text" id="subcategory" required>
-        
-        <label for="price">Price:</label>
-        <input type="number" id="price" required>
-        
-        <label for="location">Location:</label>
-        <input type="text" id="location" required>
-        
-        <label for="image">Property Image:</label>
-        <input type="file" id="image" accept="image/*" required>
-        
-        <button type="submit">Upload Property</button>
-    </form>
-
-    <script type="module">
-        // Importing Supabase
-        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
-
-        // Initialize Supabase Client
+    <div class="container">
+        <h1>Admin Panel</h1>
+        <form id="property-form">
+            <input type="text" id="name" placeholder="Property Name" required>
+            <select id="category" required>
+                <option value="">Select Category</option>
+                <option value="Residential">Residential</option>
+                <option value="Commercial">Commercial</option>
+                <option value="Industrial">Industrial</option>
+                <option value="Agricultural">Agricultural</option>
+                <option value="Government">Government</option>
+            </select>
+            <input type="text" id="subcategory" placeholder="Subcategory" required>
+            <input type="number" id="price" placeholder="Price" required>
+            <input type="text" id="location" placeholder="Location" required>
+            <input type="file" id="image" required>
+            <button type="submit">Upload Property</button>
+        </form>
+        <p id="status" class="error"></p>
+        <p id="status" class="success"></p>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.0.0/dist/supabase.min.js"></script>
+    <script>
         const supabaseUrl = 'https://cvdpmxkrqnpeozqypscy.supabase.co';
-        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2ZHBteGtycW5wZW96cXlwc2N5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjQ1OTM1MTQsImV4cCI6MjA0MDE2OTUxNH0.6GlhIzxjR_VnsFwxHbCL417Q4rb3KDH8rNQ3_KExJuE';
-        const supabase = createClient(supabaseUrl, supabaseKey);
+        const supabaseKey = 'YOUR_SUPABASE_ANON_KEY';
+        const supabase = Supabase.createClient(supabaseUrl, supabaseKey);
 
-        const form = document.getElementById('property-form');
-
-        form.addEventListener('submit', async (event) => {
-            event.preventDefault();
+        document.getElementById('property-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
 
             const name = document.getElementById('name').value;
             const category = document.getElementById('category').value;
             const subcategory = document.getElementById('subcategory').value;
             const price = document.getElementById('price').value;
             const location = document.getElementById('location').value;
-            const imageFile = document.getElementById('image').files[0];
+            const image = document.getElementById('image').files[0];
 
-            // Upload Image to Supabase Storage
-            const { data, error } = await supabase.storage.from('property-images').upload(`public/${imageFile.name}`, imageFile);
-            
-            if (error) {
-                alert('Error uploading image: ' + error.message);
+            if (!name || !category || !subcategory || !price || !location || !image) {
+                document.getElementById('status').textContent = 'Please fill out all fields.';
                 return;
             }
 
-            const imageUrl = `${supabaseUrl}/storage/v1/object/public/property-images/${imageFile.name}`;
+            try {
+                // Upload image
+                const { data: uploadData, error: uploadError } = await supabase.storage
+                    .from('property-images')
+                    .upload(image.name, image);
 
-            // Insert Property Data into Supabase
-            const { data: insertData, error: insertError } = await supabase
-                .from('properties')
-                .insert([
-                    { name, category, subcategory, price, location, image_url: imageUrl }
-                ]);
+                if (uploadError) throw uploadError;
 
-            if (insertError) {
-                alert('Error uploading property: ' + insertError.message);
-                return;
+                const imageUrl = `https://cvdpmxkrqnpeozqypscy.supabase.co/storage/v1/object/public/property-images/${uploadData.path}`;
+
+                // Insert property data
+                const { data, error } = await supabase
+                    .from('properties')
+                    .insert([{ name, category, subcategory, price, location, image_url: imageUrl }]);
+
+                if (error) throw error;
+
+                document.getElementById('status').textContent = 'Property uploaded successfully!';
+                document.getElementById('status').className = 'success';
+                document.getElementById('property-form').reset();
+            } catch (error) {
+                document.getElementById('status').textContent = `Error: ${error.message}`;
+                document.getElementById('status').className = 'error';
             }
-
-            alert('Property uploaded successfully!');
-            form.reset();
         });
     </script>
+</body>
+</html>
+    
 
-<script type="text/javascript" id="dcoder_script">function loadProperties() {
-    const sheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSHxUuw0dC5P4o1_7UwUjKmRgMCrm88_0UkTcOuey23iWnGIBSyE0gl4nnVbWI3nMcA/pub?output=csv';
-
-    fetch(sheetUrl)
-        .then(response => response.text())
-        .then(data => {
-            const rows = data.split('\n').slice(1); // Skip the header row
-            const propertyList = document.getElementById('propertyList');
-            propertyList.innerHTML = '';
-
-            rows.forEach(row => {
-                const [title, description, price, category, image] = row.split(',');
-                const propertyItem = document.createElement('div');
-                propertyItem.className = 'property';
-                propertyItem.innerHTML = `
-                    <h2>${title}</h2>
-                    <p>${description}</p>
-                    <p>Price: ${price}</p>
-                    <p>Category: ${category}</p>
-                    ${image ? `<img src="${image}" alt="Property Image">` : ''}
-                `;
-                propertyList.appendChild(propertyItem);
-            });
-        })
-        .catch(error => console.error('Error loading properties:', error));
-}
-
-document.addEventListener('DOMContentLoaded', loadProperties);</script></body></html>
     
