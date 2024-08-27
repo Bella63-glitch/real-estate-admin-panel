@@ -129,6 +129,7 @@
             }
 
             try {
+                // Upload image to Supabase Storage
                 const { data: uploadData, error: uploadError } = await supabase
                     .storage
                     .from('property-images')
@@ -136,11 +137,18 @@
 
                 if (uploadError) throw uploadError;
 
-                const imageUrl = supabase.storage.from('property-images').getPublicUrl(uploadData.path).data.publicUrl;
+                // Get public URL for the uploaded image
+                const { data: { publicUrl }, error: urlError } = supabase
+                    .storage
+                    .from('property-images')
+                    .getPublicUrl(uploadData.path);
 
+                if (urlError) throw urlError;
+
+                // Insert property details into Supabase Table
                 const { data, error } = await supabase
                     .from('properties')
-                    .insert([{ name, description, category, subcategory, image_url: imageUrl }]);
+                    .insert([{ name, description, category, subcategory, image_url: publicUrl }]);
 
                 if (error) throw error;
 
@@ -154,8 +162,5 @@
             }
         });
     </script>
-</body>
-</html>
-                
 </body>
 </html>
