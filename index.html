@@ -13,7 +13,7 @@
         }
 
         .container {
-            width: 50%;
+            max-width: 600px;
             margin: 0 auto;
             background-color: #fff;
             padding: 20px;
@@ -23,11 +23,12 @@
         h1 {
             text-align: center;
             color: #002244;
+            margin-bottom: 20px;
         }
 
         label {
             display: block;
-            margin-top: 10px;
+            margin: 15px 0 5px;
             font-weight: bold;
             color: #002244;
         }
@@ -53,20 +54,24 @@
             border-radius: 5px;
             margin-top: 20px;
             cursor: pointer;
+            width: 100%;
         }
 
         button:hover {
             background-color: #004466;
         }
 
+        .message {
+            text-align: center;
+            margin-top: 20px;
+        }
+
         .error {
             color: red;
-            margin-top: 10px;
         }
 
         .success {
             color: green;
-            margin-top: 10px;
         }
     </style>
 </head>
@@ -93,8 +98,7 @@
 
             <button type="submit">Upload Property</button>
 
-            <div class="error" id="error"></div>
-            <div class="success" id="success"></div>
+            <div class="message" id="message"></div>
         </form>
     </div>
 
@@ -105,13 +109,12 @@
         const supabase = Supabase.createClient(supabaseUrl, supabaseKey);
 
         const propertyForm = document.getElementById('propertyForm');
-        const errorDiv = document.getElementById('error');
-        const successDiv = document.getElementById('success');
+        const messageDiv = document.getElementById('message');
 
         propertyForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            errorDiv.textContent = '';
-            successDiv.textContent = '';
+            messageDiv.textContent = '';
+            messageDiv.className = '';
 
             const name = document.getElementById('name').value;
             const description = document.getElementById('description').value;
@@ -120,86 +123,39 @@
             const imageFile = document.getElementById('image').files[0];
 
             if (!imageFile) {
-                errorDiv.textContent = 'Please select an image.';
+                messageDiv.textContent = 'Please select an image.';
+                messageDiv.className = 'message error';
                 return;
             }
 
-            const { data: uploadData, error: uploadError } = await supabase
-                .storage
-                .from('property-images')
-                .upload(`${Date.now()}_${imageFile.name}`, imageFile);
+            try {
+                const { data: uploadData, error: uploadError } = await supabase
+                    .storage
+                    .from('property-images')
+                    .upload(`${Date.now()}_${imageFile.name}`, imageFile);
 
-            if (uploadError) {
-                errorDiv.textContent = 'Error uploading image: ' + uploadError.message;
-                return;
-            }
+                if (uploadError) throw uploadError;
 
-            const imageUrl = supabase.storage.from('property-images').getPublicUrl(uploadData.path).data.publicUrl;
+                const imageUrl = supabase.storage.from('property-images').getPublicUrl(uploadData.path).data.publicUrl;
 
-            const { data, error } = await supabase
-                .from('properties')
-                .insert([{ name, description, category, subcategory, image_url: imageUrl }]);
+                const { data, error } = await supabase
+                    .from('properties')
+                    .insert([{ name, description, category, subcategory, image_url: imageUrl }]);
 
-            if (error) {
-                errorDiv.textContent = 'Error uploading property: ' + error.message;
-            } else {
-                successDiv.textContent = 'Property uploaded successfully!';
+                if (error) throw error;
+
+                messageDiv.textContent = 'Property uploaded successfully!';
+                messageDiv.className = 'message success';
                 propertyForm.reset();
+
+            } catch (error) {
+                messageDiv.textContent = 'Error: ' + error.message;
+                messageDiv.className = 'message error';
             }
         });
     </script>
 </body>
 </html>
-
-                });
-            }
-        });
-
-        // Upload property
-        document.getElementById('upload-button').addEventListener('click', async () => {
-            const propertyName = document.getElementById('property-name').value;
-            const propertyPrice = document.getElementById('property-price').value;
-            const propertyImage = document.getElementById('property-image').files[0];
-            const category = categorySelect.value;
-            const subcategory = subcategorySelect.value;
-
-            if (!propertyName || !propertyPrice || !propertyImage || !category || !subcategory) {
-                alert('Please fill in all fields.');
-                return;
-            }
-
-            try {
-                // Upload image to Supabase Storage
-                const { data, error } = await supabase
-                    .storage
-                    .from('property-images')
-                    .upload(`public/${propertyImage.name}`, propertyImage);
-
-                if (error) throw error;
-
-                const imageUrl = `https://cvdpmxkrqnpeozqypscy.supabase.co/storage/v1/object/public/property-images/${propertyImage.name}`;
-
-                // Insert property details into Supabase
-                const { data: propertyData, error: propertyError } = await supabase
-                    .from('properties')
-                    .insert([
-                        {
-                            name: propertyName,
-                            price: propertyPrice,
-                            category: category,
-                            subcategory: subcategory,
-                            image_url: imageUrl
-                        }
-                    ]);
-
-                if (propertyError) throw propertyError;
-
-                alert('Property uploaded successfully!');
-            } catch (error) {
-                console.error('Error uploading property:', error.message);
-                alert('Failed to upload property. Please try again.');
-            }
-        });
-    </script>
+                
 </body>
 </html>
