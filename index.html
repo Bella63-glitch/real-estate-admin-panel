@@ -1,166 +1,126 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Panel</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
-            margin: 0;
-            padding: 20px;
-        }
+<!doctype html>
+<html lang="en"> 
+ <head> 
+  <meta charset="UTF-8"> 
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+  <title>Admin Panel - Property Management</title> 
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: white;
+      margin: 0;
+      padding: 0;
+      color: #002244;
+    }
 
-        .container {
-            max-width: 600px;
-            margin: 0 auto;
-            background-color: #fff;
-            padding: 20px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-        }
+    header {
+      background-color: #002250;
+      color: white;
+      padding: 15px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+    }
 
-        h1 {
-            text-align: center;
-            color: #002244;
-            margin-bottom: 20px;
-        }
+    header img {
+      height: 50px;
+    }
 
-        label {
-            display: block;
-            margin: 15px 0 5px;
-            font-weight: bold;
-            color: #002244;
-        }
+    nav {
+      display: flex;
+      gap: 10px;
+    }
 
-        input, textarea {
-            width: 100%;
-            padding: 10px;
-            margin-top: 5px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            box-sizing: border-box;
-        }
+    nav a {
+      color: white;
+      text-decoration: none;
+      padding: 10px 15px;
+      display: block;
+      border-radius: 5px;
+      font-size: 14px;
+    }
 
-        input[type="file"] {
-            padding: 3px;
-        }
+    nav a:hover {
+      background-color: #003366;
+    }
 
-        button {
-            background-color: #002244;
-            color: white;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 5px;
-            margin-top: 20px;
-            cursor: pointer;
-            width: 100%;
-        }
+    h1 {
+      text-align: center;
+      color: #002244;
+      margin: 20px 0;
+    }
 
-        button:hover {
-            background-color: #004466;
-        }
+    .upload-section {
+      margin: 20px;
+      padding: 20px;
+      border: 2px solid #002244;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      background-color: #f9f9f9;
+    }
 
-        .message {
-            text-align: center;
-            margin-top: 20px;
-        }
+    .upload-section input[type="file"] {
+      margin: 10px 0;
+    }
 
-        .error {
-            color: red;
-        }
+    .upload-section button {
+      padding: 10px 15px;
+      background-color: #002244;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
 
-        .success {
-            color: green;
-        }
-    </style>
-</head>
-<body>
+    .upload-section button:hover {
+      background-color: #003366;
+    }
+  </style> 
+ </head> 
+ <body> 
+  <header> 
+    <a href="index.html"><img src="https://i.postimg.cc/Bvdrr3NZ/IMG-20240817-175902.png" alt="Logo"></a> 
+    <nav> 
+      <a href="index.html">Home</a> 
+      <a href="property-listings.html">Listings</a> 
+      <a href="about-us.html">About Us</a> 
+    </nav> 
+  </header> 
+  <h1>Admin Panel - Upload Property Image</h1> 
+  <div class="upload-section"> 
+    <label for="propertyImage">Select Property Image:</label>
+    <input type="file" id="propertyImage" accept="image/*">
+    <button onclick="uploadImage()">Upload Image</button>
+  </div> 
+  <footer> 
+   <p>© 2024 Property Listings. All rights reserved.</p> 
+  </footer> 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <script>
+    const supabaseUrl = 'https://cvdpmxkrqnpeozqypscy.supabase.co';
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2ZHBteGtycW5wZW96cXlwc2N5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjQ1OTM1MTQsImV4cCI6MjA0MDE2OTUxNH0.6GlhIzxjR_VnsFwxHbCL417Q4rb3KDH8rNQ3_KExJuE';
+    const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
-    <div class="container">
-        <h1>Upload Property</h1>
+    async function uploadImage() {
+      const fileInput = document.getElementById('propertyImage');
+      const file = fileInput.files[0];
+      if (!file) {
+        alert('Please select a file.');
+        return;
+      }
 
-        <form id="propertyForm">
-            <label for="name">Property Name:</label>
-            <input type="text" id="name" name="name" required>
+      const fileName = `${new Date().getTime()}_${file.name}`;
+      const { data, error } = await supabase.storage.from('property-images').upload(fileName, file);
 
-            <label for="description">Description:</label>
-            <textarea id="description" name="description" required></textarea>
-
-            <label for="category">Category:</label>
-            <input type="text" id="category" name="category" required>
-
-            <label for="subcategory">Subcategory:</label>
-            <input type="text" id="subcategory" name="subcategory" required>
-
-            <label for="image">Property Image:</label>
-            <input type="file" id="image" name="image" accept="image/*" required>
-
-            <button type="submit">Upload Property</button>
-
-            <div class="message" id="message"></div>
-        </form>
-    </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.0.0/dist/supabase.min.js"></script>
-    <script>
-        const supabaseUrl = 'https://cvdpmxkrqnpeozqypscy.supabase.co';
-        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2ZHBteGtycW5wZW96cXlwc2N5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjQ1OTM1MTQsImV4cCI6MjA0MDE2OTUxNH0.6GlhIzxjR_VnsFwxHbCL417Q4rb3KDH8rNQ3_KExJuE';
-        const supabase = Supabase.createClient(supabaseUrl, supabaseKey);
-
-        const propertyForm = document.getElementById('propertyForm');
-        const messageDiv = document.getElementById('message');
-
-        propertyForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            messageDiv.textContent = '';
-            messageDiv.className = '';
-
-            const name = document.getElementById('name').value;
-            const description = document.getElementById('description').value;
-            const category = document.getElementById('category').value;
-            const subcategory = document.getElementById('subcategory').value;
-            const imageFile = document.getElementById('image').files[0];
-
-            if (!imageFile) {
-                messageDiv.textContent = 'Please select an image.';
-                messageDiv.className = 'message error';
-                return;
-            }
-
-            try {
-                // Upload image to Supabase Storage
-                const { data: uploadData, error: uploadError } = await supabase
-                    .storage
-                    .from('property-images')
-                    .upload(`${Date.now()}_${imageFile.name}`, imageFile);
-
-                if (uploadError) throw uploadError;
-
-                // Get public URL for the uploaded image
-                const { data: { publicUrl }, error: urlError } = supabase
-                    .storage
-                    .from('property-images')
-                    .getPublicUrl(uploadData.path);
-
-                if (urlError) throw urlError;
-
-                // Insert property details into Supabase Table
-                const { data, error } = await supabase
-                    .from('properties')
-                    .insert([{ name, description, category, subcategory, image_url: publicUrl }]);
-
-                if (error) throw error;
-
-                messageDiv.textContent = 'Property uploaded successfully!';
-                messageDiv.className = 'message success';
-                propertyForm.reset();
-
-            } catch (error) {
-                messageDiv.textContent = 'Error: ' + error.message;
-                messageDiv.className = 'message error';
-            }
-        });
-    </script>
+      if (error) {
+        console.error('Error uploading file:', error.message);
+        alert('Failed to upload image.');
+      } else {
+        alert('Image uploaded successfully!');
+        console.log('Uploaded file data:', data);
+      }
+    }
+  </script> 
 </body>
-</html>
+</html/>
