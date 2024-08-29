@@ -1,4 +1,3 @@
-
 <!doctype html>
 <html lang="en">
 <head>
@@ -67,13 +66,14 @@
   <input type="file" id="property-image">
 
   <button id="upload-button">Upload Property</button>
+  <p id="upload-status"></p>
 </div>
 
 <script type="module">
   // Import Firebase libraries
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
   import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-storage.js";
-  
+
   // Firebase configuration
   const firebaseConfig = {
     apiKey: "AIzaSyBFcaYolaeuZ5QRUt5qS9gTFf4GW-LYIZY",
@@ -88,6 +88,7 @@
   const app = initializeApp(firebaseConfig);
   const storage = getStorage(app);
 
+  // Handle subcategory selection based on category
   const subcategories = {
     lands: ['Residential Land', 'Commercial Land', 'Industrial Land'],
     residential: ['Apartment', 'Mansion', 'Bungalow', 'Villa', 'Farmhouse'],
@@ -119,69 +120,28 @@
   // Trigger change event to load subcategories on page load
   categorySelect.dispatchEvent(new Event('change'));
 
-  document.getElementById('upload-button').addEventListener('click', () => {
+  // Upload property image
+  document.getElementById('upload-button').addEventListener('click', async () => {
     const fileInput = document.getElementById('property-image');
     const file = fileInput.files[0];
+    const statusElement = document.getElementById('upload-status');
+
+    if (!file) {
+      statusElement.textContent = 'Please select an image to upload.';
+      return;
+    }
+
+    const storageRef = ref(storage, 'property-images/' + file.name);
     
-    if (file) {
-      const storageRef = ref(storage, 'property-images/' + file.name);
-      uploadBytes(storageRef, file).then((snapshot) => {
-        console.log('Uploaded a blob or file!');
-        
-        // Get the file's URL after uploading
-        getDownloadURL(snapshot.ref).then((downloadURL) => {
-          console.log('File available at', downloadURL);
-          alert('Property uploaded successfully!');
-        });
-      }).catch((error) => {
-        console.error('Error uploading file:', error);
-        alert('Failed to upload property.');
-      });
-    } else {
-      alert('Please select a file to upload.');
-    }
-  });
-</script>
-
-</body>
-</html/>
-    
-              opt.innerText = option;
-        subcategorySelect.appendChild(opt);
-      });
+    try {
+      const snapshot = await uploadBytes(storageRef, file);
+      const downloadURL = await getDownloadURL(snapshot.ref);
+      statusElement.textContent = 'Image uploaded successfully! URL: ' + downloadURL;
+    } catch (error) {
+      statusElement.textContent = 'Error uploading image: ' + error.message;
     }
   });
 
-  // Trigger change event to load subcategories on page load
-  categorySelect.dispatchEvent(new Event('change'));
-
-  // Image upload logic
-  document.getElementById('upload-button').addEventListener('click', () => {
-    const file = document.getElementById('property-image').files[0];
-
-    if (file) {
-      const storageRef = ref(storage, 'property-images/' + file.name);
-      const uploadTask = uploadBytesResumable(storageRef, file);
-
-      uploadTask.on('state_changed', 
-        (snapshot) => {
-          // Progress handler, if needed
-        }, 
-        (error) => {
-          console.error('Upload failed:', error);
-        }, 
-        () => {
-          getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
-            console.log('File available at', downloadURL);
-            alert('Image uploaded successfully!');
-            // You can also save this download URL in Firestore when you set it up
-          });
-        }
-      );
-    } else {
-      alert('Please select an image to upload.');
-    }
-  });
 </script>
 
 </body>
