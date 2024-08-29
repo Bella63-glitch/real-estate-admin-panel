@@ -59,9 +59,7 @@
 
   <label for="property-subcategory">Subcategory:</label>
   <select id="property-subcategory">
-    <option value="residential-land">Residential Land</option>
-    <option value="apartment">Apartment</option>
-    <!-- Add other subcategories as needed -->
+    <!-- Subcategories will be loaded dynamically -->
   </select>
 
   <label for="property-image">Property Image:</label>
@@ -70,13 +68,73 @@
   <button id="upload-button">Upload Property</button>
 </div>
 
-<script type="module">
-  // Initialize Supabase
-  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+<!-- Firebase App (the core Firebase SDK) -->
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js"></script>
 
-  const supabaseUrl = 'https://cvdpmxkrqnpeozqypscy.supabase.co';
-  const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2ZHBteGtycW5wZW96cXlwc2N5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjQ1OTM1MTQsImV4cCI6MjA0MDE2OTUxNH0.6GlhIzxjR_VnsFwxHbCL417Q4rb3KDH8rNQ3_KExJuE';
-  const supabase = createClient(supabaseUrl, supabaseKey);
+<!-- Firebase Firestore -->
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js"></script>
+
+<!-- Firebase Storage -->
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-storage.js"></script>
+
+<!-- Firebase Analytics (Optional) -->
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-analytics.js"></script>
+
+<script type="module">
+  // Import the functions you need from the SDKs
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+  import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+  import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-storage.js";
+  import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-analytics.js";
+
+  // Your Firebase configuration
+  const firebaseConfig = {
+    apiKey: "AIzaSyBFcaYolaeuZ5QRUt5qS9gTFf4GW-LYIZY",
+    authDomain: "legacy-genuine-properties.firebaseapp.com",
+    projectId: "legacy-genuine-properties",
+    storageBucket: "legacy-genuine-properties.appspot.com",
+    messagingSenderId: "795578734998",
+    appId: "1:795578734998:web:5a06078443af3bec4ee5b7",
+    measurementId: "G-RRZ7M9TW8T"
+  };
+
+  // Initialize Firebase
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app); // Firestore instance
+  const storage = getStorage(app); // Storage instance
+  const analytics = getAnalytics(app); // Analytics instance (optional)
+
+  // Subcategories based on selected category
+  const subcategories = {
+    lands: ['Residential Land', 'Commercial Land', 'Industrial Land'],
+    residential: ['Apartment', 'Mansion', 'Bungalow', 'Villa', 'Farmhouse'],
+    commercial: ['Office', 'Institution', 'Shopping', 'Hotel'],
+    industrial: ['Factory', 'Warehouse', 'Flexible Space', 'Special Purpose'],
+    agriculture: ['Green Home', 'Flower Home', 'Special Purpose'],
+    government: ['Affordable Home']
+  };
+
+  const categorySelect = document.getElementById('property-category');
+  const subcategorySelect = document.getElementById('property-subcategory');
+
+  categorySelect.addEventListener('change', function() {
+    const selectedCategory = this.value;
+    const options = subcategories[selectedCategory];
+
+    subcategorySelect.innerHTML = ''; // Clear previous options
+
+    if (options) {
+      options.forEach(option => {
+        const opt = document.createElement('option');
+        opt.value = option.toLowerCase().replace(/\s+/g, '-');
+        opt.innerText = option;
+        subcategorySelect.appendChild(opt);
+      });
+    }
+  });
+
+  // Trigger change event to load subcategories on page load
+  categorySelect.dispatchEvent(new Event('change'));
 
   document.getElementById('upload-button').addEventListener('click', async () => {
     const title = document.getElementById('property-title').value;
@@ -86,41 +144,38 @@
     const fileInput = document.getElementById('property-image');
     const file = fileInput.files[0];
 
-    if (!title || !description || !category || !subcategory || !file) {
-      alert('Please fill all fields and select an image.');
+    if (!title || !description || !file) {
+      alert("Please fill out all fields and select an image.");
       return;
     }
 
-    // Upload image to Supabase Storage
-    const { data, error } = await supabase
-      .storage
-      .from('property-images')
-      .upload(`public/${file.name}`, file);
+    // Create a reference to the storage bucket
+    const storageRef = ref(storage, 'property-images/' + file.name);
+    
+    try {
+      // Upload the file to Firebase Storage
+      const uploadResult = await uploadBytes(storageRef, file);
+      const downloadURL = await getDownloadURL(uploadResult.ref);
+      console.log("File available at", downloadURL);
 
-    if (error) {
-      console.error('Error uploading image:', error);
-      alert('Error uploading image. Please try again.');
-      return;
+      // Add the property details to Firestore
+      await addDoc(collection(db, 'properties'), {
+        title: title,
+        description: description,
+        category: category,
+        subcategory: subcategory,
+        imageURL: downloadURL,
+        timestamp: serverTimestamp()
+      });
+      alert("Property uploaded successfully!");
+
+      // Optionally, clear the form
+      document.querySelector('.form-container').reset();
+    } catch (error) {
+      console.error("Error uploading file or adding document: ", error);
     }
-
-    const imageUrl = `${supabaseUrl}/storage/v1/object/public/property-images/${file.name}`;
-
-    // Store property details in Supabase Database
-    const { data: property, error: insertError } = await supabase
-      .from('properties')
-      .insert([
-        { title, description, category, subcategory, image_url: imageUrl }
-      ]);
-
-    if (insertError) {
-      console.error('Error saving property details:', insertError);
-      alert('Error saving property details. Please try again.');
-      return;
-    }
-
-    alert('Property uploaded successfully!');
   });
 </script>
 
 </body>
-</html/>
+</html>
