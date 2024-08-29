@@ -66,29 +66,52 @@
   <input type="file" id="property-image">
 
   <button id="upload-button">Upload Property</button>
-  <p id="upload-status"></p>
 </div>
 
+<!-- Firebase Configuration -->
 <script type="module">
-  // Import Firebase libraries
+  // Import Firebase SDKs
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
   import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-storage.js";
 
-  // Firebase configuration
+  // Your web app's Firebase configuration
   const firebaseConfig = {
     apiKey: "AIzaSyBFcaYolaeuZ5QRUt5qS9gTFf4GW-LYIZY",
     authDomain: "legacy-genuine-properties.firebaseapp.com",
     projectId: "legacy-genuine-properties",
     storageBucket: "legacy-genuine-properties.appspot.com",
     messagingSenderId: "795578734998",
-    appId: "1:795578734998:web:5a06078443af3bec4ee5b7"
+    appId: "1:795578734998:web:5a06078443af3bec4ee5b7",
+    measurementId: "G-RRZ7M9TW8T"
   };
 
   // Initialize Firebase
   const app = initializeApp(firebaseConfig);
   const storage = getStorage(app);
 
-  // Handle subcategory selection based on category
+  // JavaScript code to handle image upload
+  document.getElementById('upload-button').addEventListener('click', async () => {
+    const fileInput = document.getElementById('property-image');
+    const file = fileInput.files[0];
+
+    if (!file) {
+      alert('Please select an image to upload.');
+      return;
+    }
+
+    const storageRef = ref(storage, 'property-images/' + file.name);
+
+    try {
+      await uploadBytes(storageRef, file);
+      const downloadURL = await getDownloadURL(storageRef);
+      alert('Image uploaded successfully! URL: ' + downloadURL);
+    } catch (error) {
+      alert('Error uploading image: ' + error.message);
+    }
+  });
+</script>
+
+<script>
   const subcategories = {
     lands: ['Residential Land', 'Commercial Land', 'Industrial Land'],
     residential: ['Apartment', 'Mansion', 'Bungalow', 'Villa', 'Farmhouse'],
@@ -119,30 +142,10 @@
 
   // Trigger change event to load subcategories on page load
   categorySelect.dispatchEvent(new Event('change'));
-
-  // Upload property image
-  document.getElementById('upload-button').addEventListener('click', async () => {
-    const fileInput = document.getElementById('property-image');
-    const file = fileInput.files[0];
-    const statusElement = document.getElementById('upload-status');
-
-    if (!file) {
-      statusElement.textContent = 'Please select an image to upload.';
-      return;
-    }
-
-    const storageRef = ref(storage, 'property-images/' + file.name);
-    
-    try {
-      const snapshot = await uploadBytes(storageRef, file);
-      const downloadURL = await getDownloadURL(snapshot.ref);
-      statusElement.textContent = 'Image uploaded successfully! URL: ' + downloadURL;
-    } catch (error) {
-      statusElement.textContent = 'Error uploading image: ' + error.message;
-    }
-  });
-
 </script>
 
 </body>
 </html>
+
+      
+    
