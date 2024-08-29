@@ -68,13 +68,12 @@
   <button id="upload-button">Upload Property</button>
 </div>
 
-<!-- Firebase Configuration -->
 <script type="module">
   // Import Firebase SDKs
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
   import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-storage.js";
 
-  // Your web app's Firebase configuration
+  // Firebase configuration
   const firebaseConfig = {
     apiKey: "AIzaSyBFcaYolaeuZ5QRUt5qS9gTFf4GW-LYIZY",
     authDomain: "legacy-genuine-properties.firebaseapp.com",
@@ -89,29 +88,7 @@
   const app = initializeApp(firebaseConfig);
   const storage = getStorage(app);
 
-  // JavaScript code to handle image upload
-  document.getElementById('upload-button').addEventListener('click', async () => {
-    const fileInput = document.getElementById('property-image');
-    const file = fileInput.files[0];
-
-    if (!file) {
-      alert('Please select an image to upload.');
-      return;
-    }
-
-    const storageRef = ref(storage, 'property-images/' + file.name);
-
-    try {
-      await uploadBytes(storageRef, file);
-      const downloadURL = await getDownloadURL(storageRef);
-      alert('Image uploaded successfully! URL: ' + downloadURL);
-    } catch (error) {
-      alert('Error uploading image: ' + error.message);
-    }
-  });
-</script>
-
-<script>
+  // Handle category and subcategory logic
   const subcategories = {
     lands: ['Residential Land', 'Commercial Land', 'Industrial Land'],
     residential: ['Apartment', 'Mansion', 'Bungalow', 'Villa', 'Farmhouse'],
@@ -142,10 +119,32 @@
 
   // Trigger change event to load subcategories on page load
   categorySelect.dispatchEvent(new Event('change'));
+
+  // Handle file upload
+  document.getElementById('upload-button').addEventListener('click', async () => {
+    const fileInput = document.getElementById('property-image');
+    const file = fileInput.files[0];
+
+    if (!file) {
+      alert('Please select an image to upload.');
+      return;
+    }
+
+    const storageRef = ref(storage, 'property-images/' + file.name);
+
+    try {
+      await uploadBytes(storageRef, file);
+      const downloadURL = await getDownloadURL(storageRef);
+      alert('Image uploaded successfully! URL: ' + downloadURL);
+    } catch (error) {
+      alert('Error uploading image: ' + error.message);
+    }
+  });
 </script>
 
 </body>
 </html>
 
+
+
       
-    
