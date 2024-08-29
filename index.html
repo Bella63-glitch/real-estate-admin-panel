@@ -34,6 +34,13 @@
       border-radius: 5px;
       cursor: pointer;
     }
+    #upload-message {
+      margin-top: 20px;
+      font-weight: bold;
+    }
+    #uploaded-properties {
+      margin-top: 30px;
+    }
   </style>
 </head>
 <body>
@@ -66,29 +73,33 @@
   <input type="file" id="property-image">
 
   <button id="upload-button">Upload Property</button>
+  <div id="upload-message"></div>
+</div>
+
+<div id="uploaded-properties">
+  <h3>Uploaded Properties</h3>
+  <ul id="properties-list"></ul>
 </div>
 
 <script type="module">
-  // Import Firebase SDKs
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+  import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
   import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-storage.js";
 
-  // Firebase configuration
   const firebaseConfig = {
-    apiKey: "AIzaSyBFcaYolaeuZ5QRUt5qS9gTFf4GW-LYIZY",
-    authDomain: "legacy-genuine-properties.firebaseapp.com",
-    projectId: "legacy-genuine-properties",
-    storageBucket: "legacy-genuine-properties.appspot.com",
-    messagingSenderId: "795578734998",
-    appId: "1:795578734998:web:5a06078443af3bec4ee5b7",
-    measurementId: "G-RRZ7M9TW8T"
+    // Your Firebase config here
+    apiKey: "YOUR_API_KEY",
+    authDomain: "YOUR_AUTH_DOMAIN",
+    projectId: "YOUR_PROJECT_ID",
+    storageBucket: "YOUR_STORAGE_BUCKET",
+    messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+    appId: "YOUR_APP_ID",
   };
 
-  // Initialize Firebase
   const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
   const storage = getStorage(app);
 
-  // Handle category and subcategory logic
   const subcategories = {
     lands: ['Residential Land', 'Commercial Land', 'Industrial Land'],
     residential: ['Apartment', 'Mansion', 'Bungalow', 'Villa', 'Farmhouse'],
@@ -100,6 +111,8 @@
 
   const categorySelect = document.getElementById('property-category');
   const subcategorySelect = document.getElementById('property-subcategory');
+  const uploadMessage = document.getElementById('upload-message');
+  const propertiesList = document.getElementById('properties-list');
 
   categorySelect.addEventListener('change', function() {
     const selectedCategory = this.value;
@@ -120,13 +133,17 @@
   // Trigger change event to load subcategories on page load
   categorySelect.dispatchEvent(new Event('change'));
 
-  // Handle file upload
   document.getElementById('upload-button').addEventListener('click', async () => {
+    const title = document.getElementById('property-title').value;
+    const description = document.getElementById('property-description').value;
+    const category = document.getElementById('property-category').value;
+    const subcategory = document.getElementById('property-subcategory').value;
     const fileInput = document.getElementById('property-image');
     const file = fileInput.files[0];
 
-    if (!file) {
-      alert('Please select an image to upload.');
+    if (!file || !title || !description || !category || !subcategory) {
+      uploadMessage.innerText = 'Please fill in all the fields and select an image.';
+      uploadMessage.style.color = 'red';
       return;
     }
 
@@ -135,16 +152,47 @@
     try {
       await uploadBytes(storageRef, file);
       const downloadURL = await getDownloadURL(storageRef);
-      alert('Image uploaded successfully! URL: ' + downloadURL);
+
+      await addDoc(collection(db, 'properties'), {
+        title: title,
+        description: description,
+        category: category,
+        subcategory: subcategory,
+        imageUrl: downloadURL,
+        timestamp: new Date()
+      });
+
+      uploadMessage.innerText = 'Property uploaded successfully!';
+      uploadMessage.style.color = 'green';
+
+      displayUploadedProperties(); // Refresh the list of uploaded properties
     } catch (error) {
-      alert('Error uploading image: ' + error.message);
+      uploadMessage.innerText = 'Error uploading property: ' + error.message;
+      uploadMessage.style.color = 'red';
     }
   });
+
+  // Function to display uploaded properties
+  async function displayUploadedProperties() {
+    propertiesList.innerHTML = ''; // Clear the list
+
+    try {
+      const querySnapshot = await getDocs(collection(db, 'properties'));
+      querySnapshot.forEach(doc => {
+        const property = doc.data();
+        const li = document.createElement('li');
+        li.innerText = `${property.title} - ${property.category} - ${property.subcategory}`;
+        propertiesList.appendChild(li);
+      });
+    } catch (error) {
+      console.error('Error fetching properties: ', error);
+    }
+  }
+
+  // Load the uploaded properties when the page loads
+  displayUploadedProperties();
 </script>
 
 </body>
 </html>
-
-
-
-      
+ 
