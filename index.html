@@ -1,101 +1,141 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Panel - Upload Property Images</title>
-    <style>
-        /* Basic styling */
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-            padding: 0;
-        }
-
-        #upload-button {
-            background-color: #4CAF50;
-            color: white;
-            padding: 10px 20px;
-            border: none;
-            cursor: pointer;
-        }
-
-        #upload-button:hover {
-            background-color: #45a049;
-        }
-
-        #message {
-            margin-top: 20px;
-            color: green;
-            font-weight: bold;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Panel</title>
+  <style>
+    /* Simple styles to make the layout clean */
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    .input-group {
+      margin-bottom: 15px;
+    }
+    label {
+      display: block;
+      margin-bottom: 5px;
+    }
+    input[type="text"], input[type="file"], select {
+      width: 100%;
+      padding: 8px;
+      margin-bottom: 10px;
+    }
+    button {
+      padding: 10px 15px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    .message {
+      margin-top: 20px;
+      padding: 10px;
+      color: white;
+      text-align: center;
+    }
+    .message.success {
+      background-color: #4CAF50;
+    }
+    .message.error {
+      background-color: #f44336;
+    }
+  </style>
 </head>
 <body>
-    <h1>Admin Panel - Upload Property Images</h1>
-    <input type="file" id="property-image" multiple>
-    <button id="upload-button">Upload Property Images</button>
-    <div id="message"></div>
 
-    <script type="module">
-        // Your Firebase configuration (same as you provided)
-        const firebaseConfig = {
-            apiKey: "AIzaSyBFcaYolaeuZ5QRUt5qS9gTFf4GW-LYIZY",
-            authDomain: "legacy-genuine-properties.firebaseapp.com",
-            databaseURL: "https://legacy-c3712-default-rtdb.firebaseio.com",
-            projectId: "legacy-genuine-properties",
-            storageBucket: "legacy-genuine-properties.appspot.com",
-            messagingSenderId: "795578734998",
-            appId: "1:795578734998:web:5a06078443af3bec4ee5b7",
-            measurementId: "G-RRZ7M9TW8T"
-        };
+  <div class="container">
+    <h2>Upload Property</h2>
+    <div class="input-group">
+      <label for="property-name">Property Name:</label>
+      <input type="text" id="property-name" placeholder="Enter property name">
+    </div>
+    <div class="input-group">
+      <label for="property-category">Category:</label>
+      <select id="property-category">
+        <option value="Residential">Residential</option>
+        <option value="Commercial">Commercial</option>
+        <option value="Industrial">Industrial</option>
+        <option value="Land">Land</option>
+      </select>
+    </div>
+    <div class="input-group">
+      <label for="property-image">Property Image:</label>
+      <input type="file" id="property-image" accept="image/*">
+    </div>
+    <button id="upload-button">Upload Property</button>
 
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
-        import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-storage.js";
-        import { getDatabase, ref as dbRef, set, push, child } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-database.js";
+    <div id="upload-message" class="message" style="display: none;"></div>
+  </div>
 
-        // Initialize Firebase
-        const app = initializeApp(firebaseConfig);
-        const storage = getStorage(app);
-        const database = getDatabase(app);
+  <script type="module">
+    // Firebase configuration
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+    import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-storage.js";
+    import { getDatabase, ref as dbRef, set, push } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-database.js";
 
-        document.getElementById('upload-button').addEventListener('click', async () => {
-            const fileInput = document.getElementById('property-image');
-            const files = fileInput.files;
+    const firebaseConfig = {
+      apiKey: "AIzaSyBFcaYolaeuZ5QRUt5qS9gTFf4GW-LYIZY",
+      authDomain: "legacy-genuine-properties.firebaseapp.com",
+      databaseURL: "https://legacy-c3712-default-rtdb.firebaseio.com/",
+      projectId: "legacy-genuine-properties",
+      storageBucket: "legacy-genuine-properties.appspot.com",
+      messagingSenderId: "795578734998",
+      appId: "1:795578734998:web:5a06078443af3bec4ee5b7",
+      measurementId: "G-RRZ7M9TW8T"
+    };
 
-            if (files.length === 0) {
-                alert('Please select one or more images to upload.');
-                return;
-            }
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const storage = getStorage(app);
+    const database = getDatabase(app);
 
-            const propertyKey = push(child(dbRef(database), 'properties')).key;
-            const messageDiv = document.getElementById('message');
-            messageDiv.innerHTML = 'Uploading...';
+    document.getElementById('upload-button').addEventListener('click', async () => {
+      const propertyName = document.getElementById('property-name').value.trim();
+      const propertyCategory = document.getElementById('property-category').value;
+      const fileInput = document.getElementById('property-image');
+      const file = fileInput.files[0];
+      const uploadMessage = document.getElementById('upload-message');
 
-            try {
-                const imageUrls = [];
-                for (const file of files) {
-                    const storageRef = ref(storage, 'property-images/' + propertyKey + '/' + file.name);
-                    await uploadBytes(storageRef, file);
-                    const downloadURL = await getDownloadURL(storageRef);
-                    imageUrls.push(downloadURL);
-                }
+      if (!propertyName || !file) {
+        uploadMessage.textContent = 'Please fill in all fields and select an image.';
+        uploadMessage.className = 'message error';
+        uploadMessage.style.display = 'block';
+        return;
+      }
 
-                await set(dbRef(database, 'properties/' + propertyKey), {
-                    images: imageUrls,
-                    uploadedAt: new Date().toISOString()
-                });
+      const storageRef = ref(storage, 'property-images/' + file.name);
+      const propertyRef = push(dbRef(database, 'properties'));
 
-                messageDiv.innerHTML = 'Images uploaded successfully!';
-            } catch (error) {
-                messageDiv.innerHTML = 'Error uploading images: ' + error.message;
-            }
+      try {
+        await uploadBytes(storageRef, file);
+        const downloadURL = await getDownloadURL(storageRef);
+
+        await set(propertyRef, {
+          name: propertyName,
+          category: propertyCategory,
+          imageUrl: downloadURL
         });
-    </script>
+
+        uploadMessage.textContent = 'Property uploaded successfully!';
+        uploadMessage.className = 'message success';
+        uploadMessage.style.display = 'block';
+        
+        // Clear the form fields
+        document.getElementById('property-name').value = '';
+        fileInput.value = '';
+      } catch (error) {
+        uploadMessage.textContent = 'Error uploading property: ' + error.message;
+        uploadMessage.className = 'message error';
+        uploadMessage.style.display = 'block';
+      }
+    });
+  </script>
+
 </body>
 </html>
-
-
-
-
- 
