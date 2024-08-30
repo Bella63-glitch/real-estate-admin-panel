@@ -1,219 +1,212 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin Panel - Upload Property</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background-color: #ffffff;
-      color: #002244; /* Dark blue theme color */
-      margin: 20px;
-    }
-    .container {
-      max-width: 600px;
-      margin: 0 auto;
-      padding: 20px;
-      border: 1px solid #002244;
-      border-radius: 10px;
-      background-color: #f9f9f9;
-    }
-    h2 {
-      color: #002244;
-      text-align: center;
-    }
-    .input-group {
-      margin-bottom: 15px;
-    }
-    label {
-      display: block;
-      margin-bottom: 5px;
-      color: #002244;
-    }
-    input[type="text"], input[type="number"], input[type="file"], select {
-      width: 100%;
-      padding: 10px;
-      margin-bottom: 10px;
-      border: 1px solid #002244;
-      border-radius: 5px;
-    }
-    button {
-      width: 100%;
-      padding: 10px;
-      background-color: #4CAF50; /* Green theme color */
-      color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      font-size: 16px;
-    }
-    .message {
-      margin-top: 20px;
-      padding: 10px;
-      color: white;
-      text-align: center;
-      border-radius: 5px;
-    }
-    .message.success {
-      background-color: #4CAF50;
-    }
-    .message.error {
-      background-color: #f44336;
-    }
-  </style>
-</head>
-<body>
-
-  <div class="container">
-    <h2>Upload Property</h2>
-    
-    <div class="input-group">
-      <label for="property-name">Property Name:</label>
-      <input type="text" id="property-name" placeholder="Enter property name">
-    </div>
-
-    <div class="input-group">
-      <label for="property-price">Price:</label>
-      <input type="number" id="property-price" placeholder="Enter property price">
-    </div>
-
-    <div class="input-group">
-      <label for="property-location">Location:</label>
-      <input type="text" id="property-location" placeholder="Enter property location">
-    </div>
-
-    <div class="input-group">
-      <label for="property-category">Category:</label>
-      <select id="property-category">
-        <option value="Residential">Residential</option>
-        <option value="Commercial">Commercial</option>
-        <option value="Industrial">Industrial</option>
-        <option value="Land">Land</option>
-      </select>
-    </div>
-
-    <div class="input-group">
-      <label for="property-subcategory">Subcategory:</label>
-      <select id="property-subcategory">
-        <!-- Subcategory options will be dynamically populated based on category -->
-      </select>
-    </div>
-
-    <div class="input-group">
-      <label for="property-image">Upload Image(s):</label>
-      <input type="file" id="property-image" accept="image/*" multiple>
-    </div>
-
-    <button id="upload-button">Upload Property</button>
-
-    <div id="upload-message" class="message"></div>
-  </div>
-
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
-    import { getDatabase, ref as dbRef, push, set } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-database.js";
-    import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-storage.js";
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyBFcaYolaeuZ5QRUt5qS9gTFf4GW-LYIZY",
-      authDomain: "legacy-genuine-properties.firebaseapp.com",
-      databaseURL: "https://legacy-c3712-default-rtdb.firebaseio.com/",
-      projectId: "legacy-genuine-properties",
-      storageBucket: "legacy-genuine-properties.appspot.com",
-      messagingSenderId: "795578734998",
-      appId: "1:795578734998:web:5a06078443af3bec4ee5b7",
-      measurementId: "G-RRZ7M9TW8T"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const database = getDatabase(app);
-    const storage = getStorage(app);
-
-    const categorySelect = document.getElementById('property-category');
-    const subcategorySelect = document.getElementById('property-subcategory');
-
-    // Subcategory options based on category
-    const subcategories = {
-      Residential: ["Apartment", "Mansion", "Bungalow", "Villa"],
-      Commercial: ["Office", "Shop", "Hotel", "Shopping Mall"],
-      Industrial: ["Factory", "Warehouse", "Distribution Center"],
-      Land: ["Residential Land", "Commercial Land", "Industrial Land"]
-    };
-
-    // Populate subcategories based on selected category
-    categorySelect.addEventListener('change', () => {
-      const selectedCategory = categorySelect.value;
-      subcategorySelect.innerHTML = ''; // Clear existing options
-
-      subcategories[selectedCategory].forEach(subcategory => {
-        const option = document.createElement('option');
-        option.value = subcategory;
-        option.textContent = subcategory;
-        subcategorySelect.appendChild(option);
-      });
-    });
-
-    // Initialize with the default category (Residential)
-    categorySelect.dispatchEvent(new Event('change'));
-
-    document.getElementById('upload-button').addEventListener('click', async () => {
-      const propertyName = document.getElementById('property-name').value;
-      const propertyPrice = document.getElementById('property-price').value;
-      const propertyLocation = document.getElementById('property-location').value;
-      const propertyCategory = categorySelect.value;
-      const propertySubcategory = subcategorySelect.value;
-      const fileInput = document.getElementById('property-image');
-      const files = fileInput.files;
-
-      if (!propertyName || !propertyPrice || !propertyLocation || files.length === 0) {
-        alert('Please fill in all fields and select at least one image.');
-        return;
-      }
-
-      try {
-        let imageUrls = [];
-
-        for (let i = 0; i < files.length; i++) {
-          const file = files[i];
-          const storageReference = storageRef(storage, 'property-images/' + file.name);
-          
-          await uploadBytes(storageReference, file);
-          const downloadURL = await getDownloadURL(storageReference);
-          imageUrls.push(downloadURL);
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f2f5;
+            color: #333;
         }
 
-        // Save property details to Firebase Database
-        const propertyRef = push(dbRef(database, 'properties'));
-        await set(propertyRef, {
-          name: propertyName,
-          price: propertyPrice,
-          location: propertyLocation,
-          category: propertyCategory,
-          subcategory: propertySubcategory,
-          images: imageUrls
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .input-group input,
+        .input-group select {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+        }
+
+        .input-group button {
+            padding: 10px 20px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        .success-message {
+            color: green;
+            margin-top: 20px;
+        }
+
+        .property-list {
+            margin-top: 20px;
+        }
+
+        .property-item {
+            background-color: #fff;
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+        }
+
+        .property-item img {
+            max-width: 100%;
+            height: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Upload Property</h1>
+        
+        <div class="input-group">
+            <label for="property-name">Property Name:</label>
+            <input type="text" id="property-name" placeholder="Enter property name">
+        </div>
+
+        <div class="input-group">
+            <label for="property-price">Price:</label>
+            <input type="number" id="property-price" placeholder="Enter price">
+        </div>
+
+        <div class="input-group">
+            <label for="property-location">Location:</label>
+            <input type="text" id="property-location" placeholder="Enter location">
+        </div>
+
+        <div class="input-group">
+            <label for="property-category">Category:</label>
+            <select id="property-category">
+                <option value="Residential">Residential</option>
+                <option value="Commercial">Commercial</option>
+                <option value="Industrial">Industrial</option>
+                <option value="Agriculture">Agriculture</option>
+                <option value="Government">Government</option>
+            </select>
+        </div>
+
+        <div class="input-group">
+            <label for="property-image">Upload Images:</label>
+            <input type="file" id="property-image" multiple>
+        </div>
+
+        <div class="input-group">
+            <button id="upload-button">Upload</button>
+        </div>
+
+        <p id="success-message" class="success-message"></p>
+
+        <h2>Uploaded Properties</h2>
+        <div id="property-list" class="property-list"></div>
+    </div>
+
+    <!-- Add Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-storage.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-database.js"></script>
+
+    <!-- Firebase Configuration -->
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyB-RBBVh0Y8RQZzN2OaNTP5nHoJdrtBGU8",
+            authDomain: "legacy-c3712.firebaseapp.com",
+            databaseURL: "https://legacy-c3712-default-rtdb.firebaseio.com/",
+            projectId: "legacy-c3712",
+            storageBucket: "legacy-c3712.appspot.com",
+            messagingSenderId: "131490512404",
+            appId: "1:131490512404:web:6c9c1bc89edac154f9a51f"
+        };
+
+        // Initialize Firebase
+        const app = firebase.initializeApp(firebaseConfig);
+        const storage = firebase.storage();
+        const database = firebase.database();
+
+        // Image upload logic
+        document.getElementById('upload-button').addEventListener('click', async () => {
+            const propertyName = document.getElementById('property-name').value;
+            const propertyPrice = document.getElementById('property-price').value;
+            const propertyLocation = document.getElementById('property-location').value;
+            const propertyCategory = document.getElementById('property-category').value;
+            const files = document.getElementById('property-image').files;
+
+            if (!propertyName || !propertyPrice || !propertyLocation || files.length === 0) {
+                alert('Please fill in all fields and select images.');
+                return;
+            }
+
+            const uploadPromises = [];
+            const imageUrls = [];
+
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                const storageRef = storage.ref('property-images/' + file.name);
+
+                const uploadTask = storageRef.put(file).then(async () => {
+                    const downloadURL = await storageRef.getDownloadURL();
+                    imageUrls.push(downloadURL);
+                });
+
+                uploadPromises.push(uploadTask);
+            }
+
+            try {
+                await Promise.all(uploadPromises);
+
+                const newPropertyRef = database.ref('properties').push();
+                await newPropertyRef.set({
+                    name: propertyName,
+                    price: propertyPrice,
+                    location: propertyLocation,
+                    category: propertyCategory,
+                    images: imageUrls
+                });
+
+                document.getElementById('success-message').textContent = 'Property uploaded successfully!';
+
+                displayUploadedProperty(newPropertyRef.key, propertyName, propertyPrice, propertyLocation, propertyCategory, imageUrls);
+
+                // Clear the form
+                document.getElementById('property-name').value = '';
+                document.getElementById('property-price').value = '';
+                document.getElementById('property-location').value = '';
+                document.getElementById('property-image').value = '';
+            } catch (error) {
+                alert('Error uploading property: ' + error.message);
+            }
         });
 
-        const messageDiv = document.getElementById('upload-message');
-        messageDiv.textContent = `Property "${propertyName}" uploaded successfully!`;
-        messageDiv.className = 'message success';
+        // Function to display the uploaded property
+        function displayUploadedProperty(id, name, price, location, category, imageUrls) {
+            const propertyList = document.getElementById('property-list');
+            const propertyItem = document.createElement('div');
+            propertyItem.classList.add('property-item');
 
-        // Clear the input fields after upload
-        document.getElementById('property-name').value = '';
-        document.getElementById('property-price').value = '';
-        document.getElementById('property-location').value = '';
-        categorySelect.value = 'Residential';
-        categorySelect.dispatchEvent(new Event('change')); // Update subcategory
-        fileInput.value = '';
+            let imagesHtml = '';
+            imageUrls.forEach(url => {
+                imagesHtml += `<img src="${url}" alt="${name}" style="max-width: 100%; margin-top: 10px;">`;
+            });
 
-      } catch (error) {
-        const messageDiv = document.getElementById('upload-message');
-        messageDiv.textContent = `Error uploading property: ${error.message}`;
-        messageDiv.className = 'message error';
-      }
-    });
-  </script>
+            propertyItem.innerHTML = `
+                <h3>${name}</h3>
+                <p>Price: ${price}</p>
+                <p>Location: ${location}</p>
+                <p>Category: ${category}</p>
+                ${imagesHtml}
+            `;
 
+            propertyList.appendChild(propertyItem);
+        }
+    </script>
 </body>
 </html>
 
@@ -221,5 +214,4 @@
 
 
 
-       
-        
+
