@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      color: #333;
+      padding: 20px;
+    }
+
+    h1 {
+      color: #002244;
+    }
+
+    .property-item {
+      background-color: #fff;
+      padding: 15px;
+      margin-bottom: 10px;
+      border-radius: 5px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .property-item h3 {
+      margin-top: 0;
+      color: #007BFF;
+    }
+
+    .property-item p {
+      margin: 5px 0;
+    }
+
+    .property-item img {
+      max-width: 100px;
+      margin-right: 10px;
+      vertical-align: middle;
+    }
+
+    .buttons {
+      margin-top: 10px;
+    }
+
+    .buttons button {
+      padding: 10px 15px;
+      margin-right: 5px;
+      border: none;
+      border-radius: 3px;
+      cursor: pointer;
+    }
+
+    .buttons button.edit {
+      background-color: #28a745;
+      color: white;
+    }
+
+    .buttons button.delete {
+      background-color: #dc3545;
+      color: white;
+    }
+  </style>
+</head>
+<body>
+  <h1>Admin Dashboard - Manage Properties</h1>
+  
+  <!-- Properties List -->
+  <div id="properties-list"></div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+    import { getDatabase, ref as dbRef, onValue, remove } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-database.js";
+
+    // Firebase configuration using your credentials
+    const firebaseConfig = {
+      apiKey: "AIzaSyBFcaYolaeuZ5QRUt5qS9gTFf4GW-LYIZY",
+      authDomain: "legacy-genuine-properties.firebaseapp.com",
+      databaseURL: "https://legacy-c3712-default-rtdb.firebaseio.com/",
+      projectId: "legacy-genuine-properties",
+      storageBucket: "legacy-genuine-properties.appspot.com",
+      messagingSenderId: "795578734998",
+      appId: "1:795578734998:web:5a06078443af3bec4ee5b7",
+      measurementId: "G-RRZ7M9TW8T"
+    };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const database = getDatabase(app);
+
+    // Reference to the properties in the database
+    const propertiesRef = dbRef(database, 'properties');
+
+    // Fetch and display properties
+    onValue(propertiesRef, (snapshot) => {
+      const properties = snapshot.val();
+      const propertiesList = document.getElementById('properties-list');
+      propertiesList.innerHTML = ''; // Clear the list
+
+      for (let property in properties) {
+        const propertyData = properties[property];
+        const propertyDiv = document.createElement('div');
+        propertyDiv.className = 'property-item';
+        propertyDiv.innerHTML = `
+          <h3>${propertyData.name}</h3>
+          <p><strong>Price:</strong> ${propertyData.price}</p>
+          <p><strong>Location:</strong> ${propertyData.location}</p>
+          <p><strong>Category:</strong> ${propertyData.category}</p>
+          <p><strong>Subcategory:</strong> ${propertyData.subcategory}</p>
+          <div><strong>Images:</strong> ${propertyData.images.map(img => `<img src="${img}" alt="Property Image">`).join(' ')}</div>
+          <div class="buttons">
+            <button class="edit" onclick="editProperty('${property}')">Edit</button>
+            <button class="delete" onclick="deleteProperty('${property}')">Delete</button>
+          </div>
+        `;
+        propertiesList.appendChild(propertyDiv);
+      }
+    });
+
+    // Delete property function
+    window.deleteProperty = async (propertyName) => {
+      if (confirm('Are you sure you want to delete this property?')) {
+        await remove(dbRef(database, 'properties/' + propertyName));
+        alert('Property deleted successfully!');
+      }
+    };
+
+    // Edit property function (to be implemented)
+    window.editProperty = (propertyName) => {
+      alert('Edit functionality coming soon!');
+    };
+  </script>
+
+</body></html>
