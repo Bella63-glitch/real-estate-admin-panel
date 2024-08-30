@@ -7,246 +7,198 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
             margin: 0;
             padding: 0;
-        }
-        .navbar {
-            background-color: #002244; /* Your theme color */
-            padding: 10px;
-            color: white;
-            text-align: center;
-        }
-        .navbar a {
-            color: white;
-            margin: 0 15px;
-            text-decoration: none;
-            font-size: 18px;
+            background-color: #f4f4f4;
         }
         .container {
-            width: 90%;
+            width: 80%;
             margin: auto;
+            overflow: hidden;
+        }
+        header {
+            background: #002244;
+            color: #ffffff;
+            padding-top: 30px;
+            min-height: 70px;
+            border-bottom: #333333 3px solid;
+        }
+        header h1 {
+            text-align: center;
+            margin: 0;
+            font-size: 24px;
+            padding-bottom: 10px;
+        }
+        form {
+            background: #ffffff;
             padding: 20px;
+            margin-top: 30px;
+            box-shadow: 0px 0px 10px 0px #000000;
         }
-        .section {
-            display: none;
-            margin-top: 20px;
-        }
-        .section.active {
-            display: block;
-        }
-        .input-group {
-            margin-bottom: 20px;
-        }
-        .input-group label {
-            display: block;
-            margin-bottom: 5px;
-        }
-        .input-group input,
-        .input-group textarea {
+        input, select {
             width: 100%;
             padding: 10px;
-            margin-bottom: 10px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
         }
-        .button {
-            padding: 10px 20px;
-            background-color: green;
-            color: white;
-            border: none;
-            border-radius: 4px;
+        button {
+            background: #002244;
+            color: #ffffff;
+            border: 0;
+            padding: 10px;
             cursor: pointer;
+        }
+        button:hover {
+            background: #0056b3;
         }
         .property-list {
             margin-top: 20px;
         }
         .property-item {
-            border-bottom: 1px solid #ccc;
-            padding: 10px 0;
+            background: #ffffff;
+            margin-bottom: 20px;
+            padding: 15px;
+            box-shadow: 0px 0px 5px 0px #cccccc;
         }
-        .property-item:last-child {
-            border-bottom: none;
-        }
-        .property-item img {
+        .property-images img {
             max-width: 100px;
-            margin-right: 20px;
-        }
-        .property-actions {
-            margin-top: 10px;
-        }
-        .edit-button,
-        .delete-button {
-            padding: 5px 10px;
             margin-right: 10px;
-            background-color: orange;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
+            margin-bottom: 10px;
         }
-        .delete-button {
-            background-color: red;
+        .property-actions button {
+            margin-right: 10px;
+            padding: 5px;
+        }
+        .success-message {
+            color: green;
+            font-weight: bold;
+            margin-top: 10px;
         }
     </style>
 </head>
 <body>
-    <div class="navbar">
-        <a href="#" id="upload-nav">Upload Properties</a>
-        <a href="#" id="manage-nav">Manage Properties</a>
-    </div>
+
+    <header>
+        <h1>Admin Panel</h1>
+    </header>
 
     <div class="container">
-        <div class="section active" id="upload-section">
-            <h2>Upload New Property</h2>
-            <div class="input-group">
-                <label for="property-title">Property Title:</label>
-                <input type="text" id="property-title" required>
-            </div>
-            <div class="input-group">
-                <label for="property-price">Price:</label>
-                <input type="text" id="property-price" required>
-            </div>
-            <div class="input-group">
-                <label for="property-location">Location:</label>
-                <input type="text" id="property-location" required>
-            </div>
-            <div class="input-group">
-                <label for="property-category">Category:</label>
-                <input type="text" id="property-category" required>
-            </div>
-            <div class="input-group">
-                <label for="property-subcategory">Subcategory:</label>
-                <input type="text" id="property-subcategory" required>
-            </div>
-            <div class="input-group">
-                <label for="property-image">Property Images:</label>
-                <input type="file" id="property-image" multiple required>
-            </div>
-            <button class="button" id="upload-button">Upload Property</button>
-            <p id="upload-message"></p>
-        </div>
+        <form id="property-form">
+            <h2>Add New Property</h2>
+            <input type="text" id="property-title" placeholder="Property Title" required>
+            <input type="text" id="property-location" placeholder="Property Location" required>
+            <input type="number" id="property-price" placeholder="Property Price" required>
+            
+            <select id="property-category">
+                <option value="" disabled selected>Select Category</option>
+                <option value="Residential">Residential</option>
+                <option value="Commercial">Commercial</option>
+                <option value="Industrial">Industrial</option>
+                <option value="Agricultural">Agricultural</option>
+            </select>
 
-        <div class="section" id="manage-section">
-            <h2>Manage Properties</h2>
-            <div class="property-list" id="property-list">
-                <!-- Properties will be displayed here -->
-            </div>
+            <select id="property-subcategory">
+                <option value="" disabled selected>Select Subcategory</option>
+                <!-- Add subcategories dynamically based on category selection -->
+            </select>
+
+            <input type="file" id="property-image" multiple required>
+            <button type="button" id="upload-button">Upload Property</button>
+            <p class="success-message" id="upload-success" style="display: none;">Property uploaded successfully!</p>
+        </form>
+
+        <div class="property-list" id="property-list">
+            <h2>Uploaded Properties</h2>
+            <!-- Property items will be dynamically added here -->
         </div>
     </div>
 
-    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-storage.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-database.js"></script>
-    <script>
-        // Your Firebase configuration
+    <script type="module">
+        // Firebase Configuration
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.3.0/firebase-app.js";
+        import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.3.0/firebase-storage.js";
+        import { getDatabase, ref as dbRef, set, push, onValue, remove } from "https://www.gstatic.com/firebasejs/10.3.0/firebase-database.js";
+
         const firebaseConfig = {
-            apiKey: "your-api-key",
-            authDomain: "your-auth-domain",
-            databaseURL: "your-database-url",
-            projectId: "your-project-id",
-            storageBucket: "your-storage-bucket",
-            messagingSenderId: "your-messaging-sender-id",
-            appId: "your-app-id"
+            apiKey: "AIzaSyBFcaYolaeuZ5QRUt5qS9gTFf4GW-LYIZY",
+            authDomain: "legacy-genuine-properties.firebaseapp.com",
+            databaseURL: "https://legacy-c3712-default-rtdb.firebaseio.com/",
+            projectId: "legacy-genuine-properties",
+            storageBucket: "legacy-genuine-properties.appspot.com",
+            messagingSenderId: "795578734998",
+            appId: "1:795578734998:web:5a06078443af3bec4ee5b7",
+            measurementId: "G-RRZ7M9TW8T"
         };
 
-        // Initialize Firebase
-        const app = firebase.initializeApp(firebaseConfig);
-        const storage = firebase.storage();
-        const database = firebase.database();
+        const app = initializeApp(firebaseConfig);
+        const storage = getStorage(app);
+        const database = getDatabase(app);
 
-        // Navigation
-        document.getElementById('upload-nav').addEventListener('click', () => {
-            document.getElementById('upload-section').classList.add('active');
-            document.getElementById('manage-section').classList.remove('active');
-        });
-
-        document.getElementById('manage-nav').addEventListener('click', () => {
-            document.getElementById('upload-section').classList.remove('active');
-            document.getElementById('manage-section').classList.add('active');
-            loadProperties(); // Load properties when navigating to manage section
-        });
-
-        // Upload new property
         document.getElementById('upload-button').addEventListener('click', async () => {
             const title = document.getElementById('property-title').value;
-            const price = document.getElementById('property-price').value;
             const location = document.getElementById('property-location').value;
+            const price = document.getElementById('property-price').value;
             const category = document.getElementById('property-category').value;
             const subcategory = document.getElementById('property-subcategory').value;
             const files = document.getElementById('property-image').files;
 
-            if (!title || !price || !location || !category || !subcategory || files.length === 0) {
-                alert('Please fill all fields and select images.');
+            if (!title || !location || !price || !category || !subcategory || files.length === 0) {
+                alert('Please fill out all fields and select at least one image.');
                 return;
             }
 
+            const propertyKey = push(dbRef(database, 'properties')).key;
+            const imageUrls = [];
+
             try {
-                const fileUploads = [];
-                for (const file of files) {
-                    const storageRef = storage.ref('property-images/' + file.name);
-                    const snapshot = await storageRef.put(file);
-                    const downloadURL = await snapshot.ref.getDownloadURL();
-                    fileUploads.push(downloadURL);
+                for (let i = 0; i < files.length; i++) {
+                    const file = files[i];
+                    const storageRef = ref(storage, 'property-images/' + file.name);
+                    await uploadBytes(storageRef, file);
+                    const downloadURL = await getDownloadURL(storageRef);
+                    imageUrls.push(downloadURL);
                 }
 
-                const propertyRef = database.ref('properties').push();
-                await propertyRef.set({
+                await set(dbRef(database, 'properties/' + propertyKey), {
                     title,
-                    price,
                     location,
+                    price,
                     category,
                     subcategory,
-                    images: fileUploads
+                    images: imageUrls
                 });
 
-                document.getElementById('upload-message').innerText = 'Property uploaded successfully!';
-                document.getElementById('upload-message').style.color = 'green';
-
-                // Clear the form after uploading
-                document.getElementById('property-title').value = '';
-                document.getElementById('property-price').value = '';
-                document.getElementById('property-location').value = '';
-                document.getElementById('property-category').value = '';
-                document.getElementById('property-subcategory').value = '';
-                document.getElementById('property-image').value = '';
-
+                document.getElementById('upload-success').style.display = 'block';
+                loadProperties();
+                document.getElementById('property-form').reset();
             } catch (error) {
                 console.error('Error uploading property:', error);
-                document.getElementById('upload-message').innerText = 'Error uploading property. Please try again.';
-                document.getElementById('upload-message').style.color = 'red';
+                alert('Error uploading property. Please try again.');
             }
         });
 
-        // Load properties
         function loadProperties() {
             const propertyList = document.getElementById('property-list');
-            propertyList.innerHTML = ''; // Clear previous list
+            propertyList.innerHTML = '';
 
-            const propertyRef = database.ref('properties');
-            propertyRef.once('value', snapshot => {
-                snapshot.forEach(childSnapshot => {
+            const propertiesRef = dbRef(database, 'properties');
+            onValue(propertiesRef, (snapshot) => {
+                snapshot.forEach((childSnapshot) => {
                     const property = childSnapshot.val();
                     const propertyKey = childSnapshot.key;
 
                     const propertyItem = document.createElement('div');
                     propertyItem.className = 'property-item';
 
+                    const propertyImages = property.images.map(url => `<img src="${url}" alt="${property.title}">`).join('');
                     const propertyInfo = `
-                        <div>
-                            <h3>${property.title}</h3>
-                            <p>Price: ${property.price}</p>
-                            <p>Location: ${property.location}</p>
-                            <p>Category: ${property.category}</p>
-                            <p>Subcategory: ${property.subcategory}</p>
-                        </div>
+                        <h3>${property.title}</h3>
+                        <p>Location: ${property.location}</p>
+                        <p>Price: ${property.price}</p>
+                        <p>Category: ${property.category}</p>
+                        <p>Subcategory: ${property.subcategory}</p>
                     `;
 
-                    let propertyImages = '';
-                    for (const imageUrl of property.images) {
-                        propertyImages += `<img src="${imageUrl}" alt="${property.title}">`;
-                    }
-                    // Adding images and action buttons to the property item
                     const propertyActions = `
                         <div class="property-images">
                             ${propertyImages}
@@ -263,20 +215,19 @@
             });
         }
 
-        // Edit property (implementation will depend on how you want to handle this)
+        // Edit property
         function editProperty(propertyKey) {
             alert('Edit functionality is not implemented yet.');
-            // You can add a similar form to upload to handle editing, pre-filling the fields with the existing data.
         }
 
         // Delete property
         function deleteProperty(propertyKey) {
             if (confirm('Are you sure you want to delete this property?')) {
-                const propertyRef = database.ref('properties/' + propertyKey);
-                propertyRef.remove()
+                const propertyRef = dbRef(database, 'properties/' + propertyKey);
+                remove(propertyRef)
                     .then(() => {
                         alert('Property deleted successfully!');
-                        loadProperties(); // Refresh the list
+                        loadProperties();
                     })
                     .catch(error => {
                         console.error('Error deleting property:', error);
@@ -284,6 +235,13 @@
                     });
             }
         }
+
+        loadProperties();
     </script>
 </body>
 </html>
+
+
+
+
+
