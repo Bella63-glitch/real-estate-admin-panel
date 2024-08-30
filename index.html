@@ -107,7 +107,7 @@
 
     <div class="input-group">
       <label for="property-image">Upload Image:</label>
-      <input type="file" id="property-image" accept="image/*">
+      <input type="file" id="property-image" accept="image/*" multiple>
     </div>
 
     <button id="upload-button">Upload Property</button>
@@ -142,19 +142,24 @@
       const propertyCategory = document.getElementById('property-category').value;
       const propertySubcategory = document.getElementById('property-subcategory').value;
       const fileInput = document.getElementById('property-image');
-      const file = fileInput.files[0];
+      const files = fileInput.files;
 
-      if (!file) {
-        alert('Please select an image to upload.');
+      if (files.length === 0) {
+        alert('Please select at least one image to upload.');
         return;
       }
 
-      const storageReference = storageRef(storage, 'property-images/' + file.name);
-
       try {
-        // Upload the image to Firebase Storage
-        await uploadBytes(storageReference, file);
-        const downloadURL = await getDownloadURL(storageReference);
+        let imageUrls = [];
+
+        for (let i = 0; i < files.length; i++) {
+          const file = files[i];
+          const storageReference = storageRef(storage, 'property-images/' + file.name);
+          
+          await uploadBytes(storageReference, file);
+          const downloadURL = await getDownloadURL(storageReference);
+          imageUrls.push(downloadURL);
+        }
 
         // Save property details to Firebase Database
         const propertyRef = push(dbRef(database, 'properties'));
@@ -164,7 +169,7 @@
           location: propertyLocation,
           category: propertyCategory,
           subcategory: propertySubcategory,
-          imageUrl: downloadURL
+          images: imageUrls
         });
 
         const messageDiv = document.getElementById('upload-message');
@@ -188,5 +193,3 @@
 
 </body>
 </html>
-{
-     
