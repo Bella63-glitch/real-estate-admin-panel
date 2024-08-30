@@ -96,17 +96,12 @@
     <div class="input-group">
       <label for="property-subcategory">Subcategory:</label>
       <select id="property-subcategory">
-        <option value="Apartment">Apartment</option>
-        <option value="Mansion">Mansion</option>
-        <option value="Bungalow">Bungalow</option>
-        <option value="Villa">Villa</option>
-        <option value="Office">Office</option>
-        <option value="Shop">Shop</option>
+        <!-- Subcategory options will be dynamically populated based on category -->
       </select>
     </div>
 
     <div class="input-group">
-      <label for="property-image">Upload Image:</label>
+      <label for="property-image">Upload Image(s):</label>
       <input type="file" id="property-image" accept="image/*" multiple>
     </div>
 
@@ -135,17 +130,44 @@
     const database = getDatabase(app);
     const storage = getStorage(app);
 
+    const categorySelect = document.getElementById('property-category');
+    const subcategorySelect = document.getElementById('property-subcategory');
+
+    // Subcategory options based on category
+    const subcategories = {
+      Residential: ["Apartment", "Mansion", "Bungalow", "Villa"],
+      Commercial: ["Office", "Shop", "Hotel", "Shopping Mall"],
+      Industrial: ["Factory", "Warehouse", "Distribution Center"],
+      Land: ["Residential Land", "Commercial Land", "Industrial Land"]
+    };
+
+    // Populate subcategories based on selected category
+    categorySelect.addEventListener('change', () => {
+      const selectedCategory = categorySelect.value;
+      subcategorySelect.innerHTML = ''; // Clear existing options
+
+      subcategories[selectedCategory].forEach(subcategory => {
+        const option = document.createElement('option');
+        option.value = subcategory;
+        option.textContent = subcategory;
+        subcategorySelect.appendChild(option);
+      });
+    });
+
+    // Initialize with the default category (Residential)
+    categorySelect.dispatchEvent(new Event('change'));
+
     document.getElementById('upload-button').addEventListener('click', async () => {
       const propertyName = document.getElementById('property-name').value;
       const propertyPrice = document.getElementById('property-price').value;
       const propertyLocation = document.getElementById('property-location').value;
-      const propertyCategory = document.getElementById('property-category').value;
-      const propertySubcategory = document.getElementById('property-subcategory').value;
+      const propertyCategory = categorySelect.value;
+      const propertySubcategory = subcategorySelect.value;
       const fileInput = document.getElementById('property-image');
       const files = fileInput.files;
 
-      if (files.length === 0) {
-        alert('Please select at least one image to upload.');
+      if (!propertyName || !propertyPrice || !propertyLocation || files.length === 0) {
+        alert('Please fill in all fields and select at least one image.');
         return;
       }
 
@@ -174,19 +196,20 @@
 
         const messageDiv = document.getElementById('upload-message');
         messageDiv.textContent = `Property "${propertyName}" uploaded successfully!`;
-        messageDiv.classList.add('success');
+        messageDiv.className = 'message success';
 
         // Clear the input fields after upload
         document.getElementById('property-name').value = '';
         document.getElementById('property-price').value = '';
         document.getElementById('property-location').value = '';
-        document.getElementById('property-category').value = 'Residential';
-        document.getElementById('property-subcategory').value = 'Apartment';
+        categorySelect.value = 'Residential';
+        categorySelect.dispatchEvent(new Event('change')); // Update subcategory
         fileInput.value = '';
+
       } catch (error) {
         const messageDiv = document.getElementById('upload-message');
         messageDiv.textContent = `Error uploading property: ${error.message}`;
-        messageDiv.classList.add('error');
+        messageDiv.className = 'message error';
       }
     });
   </script>
@@ -196,5 +219,7 @@
 
 
 
-      
-      
+
+
+       
+        
