@@ -3,251 +3,215 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Panel - Property Management</title>
+    <title>Admin Dashboard</title>
     <style>
         body {
             font-family: Arial, sans-serif;
             background-color: #f4f4f4;
             margin: 0;
-            padding: 20px;
+            padding: 0;
         }
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            background-color: #fff;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-        }
-        h1 {
-            color: #002244;
+        header {
+            background-color: #002244;
+            color: white;
+            padding: 15px;
             text-align: center;
         }
-        form {
-            margin-bottom: 20px;
+        .container {
+            max-width: 900px;
+            margin: 20px auto;
+            padding: 20px;
+            background: white;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         }
-        label {
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
             display: block;
             margin-bottom: 5px;
         }
-        input, select {
+        .form-group input, .form-group select {
             width: 100%;
             padding: 8px;
-            margin-bottom: 10px;
-            border-radius: 4px;
-            border: 1px solid #ccc;
+            box-sizing: border-box;
         }
-        .upload-success {
-            color: green;
-            font-weight: bold;
-            margin-bottom: 20px;
+        .btn {
+            display: inline-block;
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            text-align: center;
+            cursor: pointer;
+            border: none;
         }
         .property-list {
             margin-top: 20px;
         }
         .property-item {
+            border: 1px solid #ddd;
             padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 8px;
             margin-bottom: 10px;
         }
-        .property-item button {
+        .property-item img {
+            max-width: 100px;
+            display: block;
+            margin-bottom: 10px;
+        }
+        .actions {
+            margin-top: 10px;
+        }
+        .actions button {
             background-color: #d9534f;
             color: white;
             border: none;
-            padding: 8px 12px;
-            border-radius: 4px;
+            padding: 5px 10px;
             cursor: pointer;
         }
-        .property-item button:hover {
-            background-color: #c9302c;
+        .actions button.edit {
+            background-color: #f0ad4e;
         }
     </style>
 </head>
 <body>
+    <header>
+        <h1>Admin Dashboard</h1>
+    </header>
+    <div class="container">
+        <h2>Add New Property</h2>
+        <form id="upload-form">
+            <div class="form-group">
+                <label for="title">Title</label>
+                <input type="text" id="title" name="title" required>
+            </div>
+            <div class="form-group">
+                <label for="price">Price</label>
+                <input type="number" id="price" name="price" required>
+            </div>
+            <div class="form-group">
+                <label for="location">Location</label>
+                <input type="text" id="location" name="location" required>
+            </div>
+            <div class="form-group">
+                <label for="category">Category</label>
+                <select id="category" name="category" required>
+                    <option value="land">Land</option>
+                    <option value="residential">Residential</option>
+                    <option value="commercial">Commercial</option>
+                    <option value="industrial">Industrial</option>
+                    <option value="agriculture">Agriculture</option>
+                    <option value="government">Government</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="image">Property Image</label>
+                <input type="file" id="image" name="image" accept="image/*" required>
+            </div>
+            <button type="button" class="btn" id="upload-btn">Upload Property</button>
+        </form>
 
-<div class="container">
-    <h1>Admin Panel - Property Management</h1>
-
-    <form id="property-form">
-        <div>
-            <label for="property-name">Property Name</label>
-            <input type="text" id="property-name" required>
+        <h2>Manage Properties</h2>
+        <div id="property-list" class="property-list">
+            <!-- Properties will be listed here -->
         </div>
-
-        <div>
-            <label for="property-category">Category</label>
-            <select id="property-category" required>
-                <option value="Residential">Residential</option>
-                <option value="Commercial">Commercial</option>
-                <!-- Add more categories as needed -->
-            </select>
-        </div>
-
-        <div>
-            <label for="property-subcategory">Subcategory</label>
-            <select id="property-subcategory" required>
-                <!-- Subcategories will be dynamically populated based on the selected category -->
-            </select>
-        </div>
-
-        <div>
-            <label for="property-price">Price</label>
-            <input type="number" id="property-price" required>
-        </div>
-
-        <div>
-            <label for="property-location">Location</label>
-            <input type="text" id="property-location" required>
-        </div>
-
-        <div>
-            <label for="property-image">Upload Images</label>
-            <input type="file" id="property-image" multiple required>
-        </div>
-
-        <button type="submit">Upload Property</button>
-        <p id="upload-success" class="upload-success" style="display: none;">Property uploaded successfully!</p>
-    </form>
-
-    <div class="property-list" id="property-list">
-        <!-- Uploaded properties will be displayed here -->
     </div>
-</div>
 
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-storage.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js"></script>
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.3.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.3.0/firebase-storage.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.3.0/firebase-database.js"></script>
 
-<script>
-    // Firebase configuration
-    const firebaseConfig = {
-        apiKey: "AIzaSyBFcaYolaeuZ5QRUt5qS9gTFf4GW-LYIZY",
-        authDomain: "legacy-genuine-properties.firebaseapp.com",
-        databaseURL: "https://legacy-c3712-default-rtdb.firebaseio.com/",
-        projectId: "legacy-genuine-properties",
-        storageBucket: "legacy-genuine-properties.appspot.com",
-        messagingSenderId: "795578734998",
-        appId: "1:795578734998:web:5a06078443af3bec4ee5b7",
-        measurementId: "G-RRZ7M9TW8T"
-    };
+    <script>
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyBFcaYolaeuZ5QRUt5qS9gTFf4GW-LYIZY",
+            authDomain: "legacy-genuine-properties.firebaseapp.com",
+            databaseURL: "https://legacy-genuine-properties-default-rtdb.firebaseio.com",
+            projectId: "legacy-genuine-properties",
+            storageBucket: "legacy-genuine-properties.appspot.com",
+            messagingSenderId: "795578734998",
+            appId: "1:795578734998:web:5a06078443af3bec4ee5b7",
+            measurementId: "G-RRZ7M9TW8T"
+        };
 
-    // Initialize Firebase
-    const app = firebase.initializeApp(firebaseConfig);
-    const storage = firebase.storage();
-    const database = firebase.database();
+        // Initialize Firebase
+        const app = firebase.initializeApp(firebaseConfig);
+        const storage = firebase.storage();
+        const database = firebase.database();
 
-    // Handle form submission
-    document.getElementById('property-form').addEventListener('submit', async (e) => {
-        e.preventDefault();
+        // Upload property data
+        document.getElementById('upload-btn').addEventListener('click', function() {
+            const title = document.getElementById('title').value;
+            const price = document.getElementById('price').value;
+            const location = document.getElementById('location').value;
+            const category = document.getElementById('category').value;
+            const file = document.getElementById('image').files[0];
 
-        const name = document.getElementById('property-name').value;
-        const category = document.getElementById('property-category').value;
-        const subcategory = document.getElementById('property-subcategory').value;
-        const price = document.getElementById('property-price').value;
-        const location = document.getElementById('property-location').value;
-        const files = document.getElementById('property-image').files;
-
-        if (files.length === 0) {
-            alert('Please select at least one image to upload.');
-            return;
-        }
-
-        const imageUrls = [];
-
-        try {
-            for (let i = 0; i < files.length; i++) {
-                const file = files[i];
+            if (file) {
                 const storageRef = storage.ref('property-images/' + file.name);
-                await storageRef.put(file);
-                const downloadURL = await storageRef.getDownloadURL();
-                imageUrls.push(downloadURL);
-            }
+                storageRef.put(file).then(() => {
+                    storageRef.getDownloadURL().then(url => {
+                        const propertyData = {
+                            title: title,
+                            price: price,
+                            location: location,
+                            category: category,
+                            imageUrl: url
+                        };
 
-            const propertyData = {
-                name,
-                category,
-                subcategory,
-                price,
-                location,
-                imageUrls
-            };
-
-            const newPropertyRef = database.ref('properties').push();
-            await newPropertyRef.set(propertyData);
-
-            document.getElementById('upload-success').style.display = 'block';
-            document.getElementById('property-form').reset();
-            loadProperties(); // Refresh the property list after uploading
-        } catch (error) {
-            alert('Error uploading property: ' + error.message);
-        }
-    });
-
-    // Load properties from Firebase
-    function loadProperties() {
-        const propertyList = document.getElementById('property-list');
-        propertyList.innerHTML = ''; // Clear the list
-
-        database.ref('properties').on('value', (snapshot) => {
-            const properties = snapshot.val();
-            if (properties) {
-                Object.keys(properties).forEach((key) => {
-                    const property = properties[key];
-                    const propertyItem = document.createElement('div');
-                    propertyItem.className = 'property-item';
-                    propertyItem.innerHTML = `
-                        <h3>${property.name}</h3>
-                        <p><strong>Category:</strong> ${property.category}</p>
-                        <p><strong>Subcategory:</strong> ${property.subcategory}</p>
-                        <p><strong>Price:</strong> $${property.price}</p>
-                        <p><strong>Location:</strong> ${property.location}</p>
-                        <button onclick="deleteProperty('${key}')">Delete</button>
-                    `;
-                    propertyList.appendChild(propertyItem);
+                        database.ref('properties').push(propertyData);
+                        alert('Property uploaded successfully!');
+                        displayProperties();
+                    });
                 });
+            } else {
+                alert('Please select an image file.');
             }
         });
-    }
 
-    // Delete a property
-    function deleteProperty(propertyId) {
-        database.ref('properties/' + propertyId).remove()
-            .then(() => {
-                alert('Property deleted successfully!');
-                loadProperties(); // Refresh the property list after deletion
-            })
-            .catch((error) => {
-                alert('Error deleting property: ' + error.message);
+        // Display properties
+        function displayProperties() {
+            const propertyList = document.getElementById('property-list');
+            propertyList.innerHTML = '';
+
+            database.ref('properties').on('value', (snapshot) => {
+                snapshot.forEach((childSnapshot) => {
+                    const property = childSnapshot.val();
+                    const key = childSnapshot.key;
+
+                    const div = document.createElement('div');
+                    div.className = 'property-item';
+
+                    div.innerHTML = `
+                        <h3>${property.title}</h3>
+                        <p>Price: ${property.price}</p>
+                        <p>Location: ${property.location}</p>
+                        <p>Category: ${property.category}</p>
+                        <img src="${property.imageUrl}" alt="${property.title}">
+                        <div class="actions">
+                            <button class="edit" onclick="editProperty('${key}')">Edit</button>
+                            <button onclick="deleteProperty('${key}')">Delete</button>
+                        </div>
+                    `;
+                    propertyList.appendChild(div);
+                });
             });
-    }
-
-    // Initialize subcategories
-    document.getElementById('property-category').addEventListener('change', function () {
-        const subcategorySelect = document.getElementById('property-subcategory');
-        subcategorySelect.innerHTML = ''; // Clear existing options
-
-        const selectedCategory = this.value;
-        if (selectedCategory === 'Residential') {
-            subcategorySelect.innerHTML = `
-                <option value="Apartment">Apartment</option>
-                <option value="Mansion">Mansion</option>
-                <option value="Bungalow">Bungalow</option>
-                <!-- Add more subcategories as needed -->
-            `;
-        } else if (selectedCategory === 'Commercial') {
-            subcategorySelect.innerHTML = `
-                <option value="Office">Office</option>
-                <option value="Shop">Shop</option>
-                <option value="Hotel">Hotel</option>
-                <!-- Add more subcategories as needed -->
-            `;
         }
-    });
-    // Load the properties initially when the page loads
-    loadProperties();
 
-</script>
+        // Delete property
+        function deleteProperty(key) {
+            database.ref('properties/' + key).remove();
+            alert('Property deleted successfully!');
+            displayProperties();
+        }
 
+        // Edit property (placeholder for further functionality)
+        function editProperty(key) {
+            alert('Edit functionality is not yet implemented.');
+        }
+
+        // Initialize property list on load
+        displayProperties();
+    </script>
 </body>
-</html>
+</html/>
