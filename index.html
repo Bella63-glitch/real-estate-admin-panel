@@ -104,8 +104,8 @@
                 </select>
             </div>
             <div class="form-group">
-                <label for="image">Property Image</label>
-                <input type="file" id="image" name="image" accept="image/*" required>
+                <label for="images">Property Images</label>
+                <input type="file" id="images" name="images" accept="image/*" multiple required>
             </div>
             <button type="button" class="btn" id="upload-btn">Upload Property</button>
         </form>
@@ -145,27 +145,35 @@
             const price = document.getElementById('price').value;
             const location = document.getElementById('location').value;
             const category = document.getElementById('category').value;
-            const file = document.getElementById('image').files[0];
+            const files = document.getElementById('images').files;
 
-            if (file) {
-                const storageRef = storage.ref('property-images/' + file.name);
-                storageRef.put(file).then(() => {
-                    storageRef.getDownloadURL().then(url => {
-                        const propertyData = {
-                            title: title,
-                            price: price,
-                            location: location,
-                            category: category,
-                            imageUrl: url
-                        };
+            if (files.length > 0) {
+                let imageUrls = [];
 
-                        database.ref('properties').push(propertyData);
-                        alert('Property uploaded successfully!');
-                        displayProperties();
+                Array.from(files).forEach(file => {
+                    const storageRef = storage.ref('property-images/' + file.name);
+                    storageRef.put(file).then(() => {
+                        storageRef.getDownloadURL().then(url => {
+                            imageUrls.push(url);
+
+                            if (imageUrls.length === files.length) {
+                                const propertyData = {
+                                    title: title,
+                                    price: price,
+                                    location: location,
+                                    category: category,
+                                    imageUrls: imageUrls
+                                };
+
+                                database.ref('properties').push(propertyData);
+                                alert('Legacy Genuine Properties says: Property uploaded successfully!');
+                                displayProperties();
+                            }
+                        });
                     });
                 });
             } else {
-                alert('Please select an image file.');
+                alert('Legacy Genuine Properties says: Please select image files.');
             }
         });
 
@@ -182,12 +190,19 @@
                     const div = document.createElement('div');
                     div.className = 'property-item';
 
+                    let imagesHtml = '';
+                    if (property.imageUrls && property.imageUrls.length > 0) {
+                        property.imageUrls.forEach(url => {
+                            imagesHtml += `<img src="${url}" alt="${property.title}">`;
+                        });
+                    }
+
                     div.innerHTML = `
                         <h3>${property.title}</h3>
                         <p>Price: ${property.price}</p>
                         <p>Location: ${property.location}</p>
                         <p>Category: ${property.category}</p>
-                        <img src="${property.imageUrl}" alt="${property.title}">
+                        ${imagesHtml}
                         <div class="actions">
                             <button class="edit" onclick="editProperty('${key}')">Edit</button>
                             <button onclick="deleteProperty('${key}')">Delete</button>
@@ -201,17 +216,29 @@
         // Delete property
         function deleteProperty(key) {
             database.ref('properties/' + key).remove();
-            alert('Property deleted successfully!');
+            alert('Legacy Genuine Properties says: Property deleted successfully!');
             displayProperties();
         }
 
-        // Edit property (placeholder for further functionality)
+        // Edit property
         function editProperty(key) {
-            alert('Edit functionality is not yet implemented.');
+            const propertyRef = database.ref('properties/' + key);
+            propertyRef.once('value').then((snapshot) => {
+                const property = snapshot.val();
+
+                document.getElementById('title').value = property.title;
+                document.getElementById('price').value = property.price;
+                document.getElementById('location').value = property.location;
+                document.getElementById('category').value = property.category;
+
+                deleteProperty(key);
+
+                alert('Legacy Genuine Properties says: You can now edit the property details and re-upload.');
+            });
         }
 
         // Initialize property list on load
         displayProperties();
     </script>
 </body>
-</html/>
+</html>
