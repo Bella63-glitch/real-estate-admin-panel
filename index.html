@@ -1,274 +1,266 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
-            margin: 0;
-            padding: 0;
-        }
-        header {
-            background-color: #002244;
-            color: white;
-            padding: 15px;
-            text-align: center;
-        }
-        .container {
-            max-width: 900px;
-            margin: 20px auto;
-            padding: 20px;
-            background: white;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-        }
-        .form-group {
-            margin-bottom: 15px;
-        }
-        .form-group label {
-            display: block;
-            margin-bottom: 5px;
-        }
-        .form-group input, .form-group select {
-            width: 100%;
-            padding: 8px;
-            box-sizing: border-box;
-        }
-        .btn {
-            display: inline-block;
-            background-color: #4CAF50;
-            color: white;
-            padding: 10px 15px;
-            text-align: center;
-            cursor: pointer;
-            border: none;
-        }
-        .property-list {
-            margin-top: 20px;
-        }
-        .property-item {
-            border: 1px solid #ddd;
-            padding: 10px;
-            margin-bottom: 10px;
-        }
-        .property-item img {
-            max-width: 100px;
-            display: block;
-            margin-bottom: 10px;
-        }
-        .actions {
-            margin-top: 10px;
-        }
-        .actions button {
-            background-color: #d9534f;
-            color: white;
-            border: none;
-            padding: 5px 10px;
-            cursor: pointer;
-        }
-        .actions button.edit {
-            background-color: #f0ad4e;
-        }
-    </style>
-</head>
-<body>
-    <header>
-        <h1>Admin Dashboard</h1>
-    </header>
-    <div class="container">
-        <h2>Add New Property</h2>
-        <form id="upload-form">
-            <div class="form-group">
-                <label for="title">Title</label>
-                <input type="text" id="title" name="title" required>
-            </div>
-            <div class="form-group">
-                <label for="price">Price</label>
-                <input type="number" id="price" name="price" required>
-            </div>
-            <div class="form-group">
-                <label for="location">Location</label>
-                <input type="text" id="location" name="location" required>
-            </div>
-            <div class="form-group">
-                <label for="category">Category</label>
-                <select id="category" name="category" required onchange="updateSubcategories()">
-                    <option value="">Select Category</option>
-                    <option value="lands">Lands</option>
-                    <option value="residential">Residential</option>
-                    <option value="commercial">Commercial</option>
-                    <option value="industrial">Industrial</option>
-                    <option value="agriculture">Agriculture</option>
-                    <option value="government">Government</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="subcategory">Subcategory</label>
-                <select id="subcategory" name="subcategory" required>
-                    <option value="">Select Subcategory</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="images">Property Images</label>
-                <input type="file" id="images" name="images" accept="image/*" multiple required>
-            </div>
-            <button type="button" class="btn" id="upload-btn">Upload Property</button>
-        </form>
+<!doctype html>
+<html lang="en"> 
+<head> 
+  <meta charset="UTF-8"> 
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+  <title>Admin Dashboard</title> 
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      margin: 0;
+      padding: 0;
+    }
+    header {
+      background-color: #002244;
+      color: white;
+      padding: 15px;
+      text-align: center;
+    }
+    .container {
+      max-width: 900px;
+      margin: 20px auto;
+      padding: 20px;
+      background: white;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+    .form-group {
+      margin-bottom: 15px;
+    }
+    .form-group label {
+      display: block;
+      margin-bottom: 5px;
+    }
+    .form-group input, .form-group textarea, .form-group select {
+      width: 100%;
+      padding: 8px;
+      box-sizing: border-box;
+    }
+    .btn {
+      display: inline-block;
+      background-color: #4CAF50;
+      color: white;
+      padding: 10px 15px;
+      text-align: center;
+      cursor: pointer;
+      border: none;
+    }
+    .property-list {
+      margin-top: 20px;
+    }
+    .property-item {
+      border: 1px solid #ddd;
+      padding: 10px;
+      margin-bottom: 10px;
+    }
+    .property-item img {
+      max-width: 100px;
+      display: block;
+      margin-bottom: 10px;
+    }
+    .actions {
+      margin-top: 10px;
+    }
+    .actions button {
+      background-color: #d9534f;
+      color: white;
+      border: none;
+      padding: 5px 10px;
+      cursor: pointer;
+    }
+    .actions button.edit {
+      background-color: #f0ad4e;
+    }
+  </style> 
+</head> 
+<body> 
+  <header> 
+    <h1>Admin Dashboard</h1> 
+  </header> 
+  <div class="container"> 
+    <h2>Add New Property</h2> 
+    <form id="upload-form"> 
+      <div class="form-group"> 
+        <label for="title">Title</label> 
+        <input type="text" id="title" name="title" required> 
+      </div> 
+      <div class="form-group"> 
+        <label for="price">Price</label> 
+        <input type="number" id="price" name="price" required> 
+      </div> 
+      <div class="form-group"> 
+        <label for="location">Location</label> 
+        <input type="text" id="location" name="location" required> 
+      </div> 
+      <div class="form-group"> 
+        <label for="description">Description</label> 
+        <textarea id="description" name="description" rows="4" required></textarea> 
+      </div> 
+      <div class="form-group"> 
+        <label for="category">Category</label> 
+        <select id="category" name="category" required onchange="updateSubcategories()"> 
+          <option value="">Select Category</option> 
+          <option value="lands">Lands</option> 
+          <option value="residential">Residential</option> 
+          <option value="commercial">Commercial</option> 
+          <option value="industrial">Industrial</option> 
+          <option value="agriculture">Agriculture</option> 
+          <option value="government">Government</option> 
+        </select> 
+      </div> 
+      <div class="form-group"> 
+        <label for="subcategory">Subcategory</label> 
+        <select id="subcategory" name="subcategory" required> 
+          <option value="">Select Subcategory</option> 
+        </select> 
+      </div> 
+      <div class="form-group"> 
+        <label for="images">Property Images</label> 
+        <input type="file" id="images" name="images" accept="image/*" multiple required> 
+      </div> 
+      <button type="button" class="btn" id="upload-btn">Upload Property</button> 
+    </form> 
+    <h2>Manage Properties</h2> 
+    <div id="property-list" class="property-list"> 
+      <!-- Properties will be listed here --> 
+    </div> 
+  </div> 
 
-        <h2>Manage Properties</h2>
-        <div id="property-list" class="property-list">
-            <!-- Properties will be listed here -->
-        </div>
-    </div>
+  <!-- Firebase SDKs --> 
+  <script src="https://www.gstatic.com/firebasejs/9.13.0/firebase-app-compat.js"></script> 
+  <script src="https://www.gstatic.com/firebasejs/9.13.0/firebase-storage-compat.js"></script> 
+  <script src="https://www.gstatic.com/firebasejs/9.13.0/firebase-database-compat.js"></script> 
+  <script>
+    // Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyBFcaYolaeuZ5QRUt5qS9gTFf4GW-LYIZY",
+      authDomain: "legacy-genuine-properties.firebaseapp.com",
+      databaseURL: "https://legacy-genuine-properties-default-rtdb.firebaseio.com",
+      projectId: "legacy-genuine-properties",
+      storageBucket: "legacy-genuine-properties.appspot.com",
+      messagingSenderId: "795578734998",
+      appId: "1:795578734998:web:5a06078443af3bec4ee5b7",
+      measurementId: "G-RRZ7M9TW8T"
+    };
 
-    <!-- Firebase SDKs -->
-    <script src="https://www.gstatic.com/firebasejs/9.13.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.13.0/firebase-storage-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.13.0/firebase-database-compat.js"></script>
+    // Initialize Firebase
+    const app = firebase.initializeApp(firebaseConfig);
+    const storage = firebase.storage();
+    const database = firebase.database();
 
-    <script>
-        // Firebase configuration
-        const firebaseConfig = {
-            apiKey: "AIzaSyBFcaYolaeuZ5QRUt5qS9gTFf4GW-LYIZY",
-            authDomain: "legacy-genuine-properties.firebaseapp.com",
-            databaseURL: "https://legacy-genuine-properties-default-rtdb.firebaseio.com",
-            projectId: "legacy-genuine-properties",
-            storageBucket: "legacy-genuine-properties.appspot.com",
-            messagingSenderId: "795578734998",
-            appId: "1:795578734998:web:5a06078443af3bec4ee5b7",
-            measurementId: "G-RRZ7M9TW8T"
-        };
+    // Subcategory data for each category
+    const subcategoryData = {
+      lands: ['Residential Lands', 'Commercial Lands', 'Industrial Lands'],
+      residential: ['Apartment', 'Mansionette', 'Bungalow', 'Villas'],
+      commercial: ['Offices', 'Institution', 'Shopping', 'Hotels'],
+      industrial: ['Factories', 'Warehouse/Distribution', 'Flexible Spaces', 'Special Purpose'],
+      agriculture: ['Green Homes', 'Flower Homes', 'Flexible Spaces', 'Special Purpose'],
+      government: ['Affordable Homes']
+    };
 
-        // Initialize Firebase
-        const app = firebase.initializeApp(firebaseConfig);
-        const storage = firebase.storage();
-        const database = firebase.database();
-
-        // Subcategory data for each category
-        const subcategoryData = {
-            lands: ['Residential Lands', 'Commercial Lands', 'Industrial Lands'],
-            residential: ['Apartment', 'Mansionette', 'Bungalow', 'Villas'],
-            commercial: ['Offices', 'Institution', 'Shopping', 'Hotels'],
-            industrial: ['Factories', 'Warehouse/Distribution', 'Flexible Spaces', 'Special Purpose'],
-            agriculture: ['Green Homes', 'Flower Homes', 'Flexible Spaces', 'Special Purpose'],
-            government: ['Affordable Homes']
-        };
-
-        // Function to update subcategories based on selected category
-        function updateSubcategories() {
-            const category = document.getElementById('category').value;
-            const subcategorySelect = document.getElementById('subcategory');
-            
-            // Clear the current subcategories
-            subcategorySelect.innerHTML = '<option value="">Select Subcategory</option>';
-            
-            // Add new subcategories if category is selected
-            if (category && subcategoryData[category]) {
-                subcategoryData[category].forEach(subcategory => {
-                    const option = document.createElement('option');
-                    option.value = subcategory.toLowerCase().replace(/\s+/g, '-');
-                    option.textContent = subcategory;
-                    subcategorySelect.appendChild(option);
-                });
-            }
-        }
-
-        // Upload property data
-        document.getElementById('upload-btn').addEventListener('click', function() {
-            const title = document.getElementById('title').value;
-            const price = document.getElementById('price').value;
-            const location = document.getElementById('location').value;
-            const category = document.getElementById('category').value;
-            const subcategory = document.getElementById('subcategory').value;
-            const files = document.getElementById('images').files;
-
-            if (files.length > 0) {
-                let imageUrls = [];
-
-                Array.from(files).forEach(file => {
-                    const storageRef = storage.ref('property-images/' + file.name);
-                    storageRef.put(file).then(() => {
-                        storageRef.getDownloadURL().then(url => {
-                            imageUrls.push(url);
-
-                            if (imageUrls.length === files.length) {
-                                const propertyData = {
-                                    title: title,
-                                    price: price,
-                                    location: location,
-                                    category: category,
-                                    subcategory: subcategory,
-                                    imageUrls: imageUrls
-                                };
-
-                                database.ref('properties').push(propertyData);
-                                alert('Legacy Genuine Properties says: Property uploaded successfully!');
-                                displayProperties();
-                            }
-                        });
-                    });
-                });
-            } else {
-                alert('Legacy Genuine Properties says: Please select image files.');
-            }
+    // Function to update subcategories based on selected category
+    function updateSubcategories() {
+      const category = document.getElementById('category').value;
+      const subcategorySelect = document.getElementById('subcategory');
+      
+      // Clear the current subcategories
+      subcategorySelect.innerHTML = '<option value="">Select Subcategory</option>';
+      
+      // Add new subcategories if category is selected
+      if (category && subcategoryData[category]) {
+        subcategoryData[category].forEach(subcategory => {
+          const option = document.createElement('option');
+          option.value = subcategory.toLowerCase().replace(/\s+/g, '-');
+          option.textContent = subcategory;
+          subcategorySelect.appendChild(option);
         });
+      }
+    }
 
-        // Display properties
-        function displayProperties() {
-            const propertyList = document.getElementById('property-list');
-            propertyList.innerHTML = '';
+    // Upload property data
+    document.getElementById('upload-btn').addEventListener('click', function() {
+      const title = document.getElementById('title').value;
+      const price = document.getElementById('price').value;
+      const location = document.getElementById('location').value;
+      const description = document.getElementById('description').value;
+      const category = document.getElementById('category').value;
+      const subcategory = document.getElementById('subcategory').value;
+      const files = document.getElementById('images').files;
 
-            database.ref('properties').on('value', (snapshot) => {
-                snapshot.forEach((childSnapshot) => {
-                    const property = childSnapshot.val();
-                    const key = childSnapshot.key;
+      if (files.length > 0) {
+        let imageUrls = [];
 
-                    const div = document.createElement('div');
-                    div.className = 'property-item';
+        Array.from(files).forEach(file => {
+          const storageRef = storage.ref('property-images/' + file.name);
+          storageRef.put(file).then(() => {
+            storageRef.getDownloadURL().then(url => {
+              imageUrls.push(url);
 
-                    let imagesHtml = '';
-                    if (property.imageUrls && property.imageUrls.length > 0) {
-                        property.imageUrls.forEach(url => {
-                            imagesHtml += `<img src="${url}" alt="${property.title}">`;
-                        });
-                    }
+              if (imageUrls.length === files.length) {
+                const propertyData = {
+                  title: title,
+                  price: price,
+                  location: location,
+                  description: description,
+                  category: category,
+                  subcategory: subcategory,
+                  imageUrls: imageUrls
+                };
 
-                    div.innerHTML = `
-                        <h3>${property.title}</h3>
-                        <p>Price: ${property.price}</p>
-                        <p>Location: ${property.location}</p>
-                        <p>Category: ${property.category}</p>
-                        <p>Subcategory: ${property.subcategory}</p>
-                        ${imagesHtml}
-                        <div class="actions">
-                            <button class="edit" onclick="editProperty('${key}')">Edit</button>
-                            <button onclick="deleteProperty('${key}')">Delete</button>
-                        </div>
-                    `;
-                    propertyList.appendChild(div);
-                });
-            });
-        }
-
-        // Delete property
-        function deleteProperty(key) {
-            if (confirm('Are you sure you want to delete this property?')) {
-                database.ref('properties/' + key).remove();
-                alert('Legacy Genuine Properties says: Property deleted successfully!');
+                database.ref('properties').push(propertyData);
+                alert('Legacy Genuine Properties says: Property uploaded successfully!');
                 displayProperties();
-            }
-        }
+              }
+            });
+          });
+        });
+      }
+    });
 
-        // Edit property (functionality can be implemented here)
-        function editProperty(key) {
-            // Add functionality for editing property details if required
-            alert('Legacy Genuine Properties says: Editing property feature will be implemented soon!');
-        }
+    // Display properties
+    function displayProperties() {
+      const propertyList = document.getElementById('property-list');
+      propertyList.innerHTML = ''; // Clear the list
 
-        // Call displayProperties on page load
-        displayProperties();
-    </script>
+      database.ref('properties').on('value', snapshot => {
+        snapshot.forEach(childSnapshot => {
+          const property = childSnapshot.val();
+          const propertyItem = document.createElement('div');
+          propertyItem.className = 'property-item';
+
+          const propertyImages = property.imageUrls.map(url => `<img src="${url}" alt="Property Image">`).join('');
+          propertyItem.innerHTML = `
+            <h3>${property.title}</h3>
+            <p><strong>Price:</strong> ${property.price}</p>
+            <p><strong>Location:</strong> ${property.location}</p>
+            <p><strong>Description:</strong> ${property.description}</p>
+            <p><strong>Category:</strong> ${property.category}</p>
+            <p><strong>Subcategory:</strong> ${property.subcategory}</p>
+            ${propertyImages}
+            <div class="actions">
+              <button class="edit">Edit</button>
+              <button class="delete" onclick="deleteProperty('${childSnapshot.key}')">Delete</button>
+            </div>
+          `;
+          propertyList.appendChild(propertyItem);
+        });
+      });
+    }
+
+    // Delete property
+    function deleteProperty(propertyId) {
+      database.ref('properties/' + propertyId).remove()
+        .then(() => {
+          alert('Property deleted successfully!');
+          displayProperties();
+        })
+        .catch(error => {
+          console.error('Error deleting property:', error);
+        });
+    }
+
+    // Initial call to display properties
+    displayProperties();
+  </script>
 </body>
-</html>
+</html/>
