@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="en"> 
-<head> 
-  <meta charset="UTF-8"> 
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
-  <title>Admin Dashboard</title> 
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -71,65 +71,66 @@
     .actions button.edit {
       background-color: #f0ad4e;
     }
-  </style> 
-</head> 
-<body> 
-  <header> 
-    <h1>Admin Dashboard</h1> 
-  </header> 
-  <div class="container"> 
-    <h2>Add New Property</h2> 
-    <form id="upload-form"> 
-      <div class="form-group"> 
-        <label for="title">Title</label> 
-        <input type="text" id="title" name="title" required> 
-      </div> 
-      <div class="form-group"> 
-        <label for="price">Price</label> 
-        <input type="number" id="price" name="price" required> 
-      </div> 
-      <div class="form-group"> 
-        <label for="location">Location</label> 
-        <input type="text" id="location" name="location" required> 
-      </div> 
-      <div class="form-group"> 
-        <label for="description">Description</label> 
-        <textarea id="description" name="description" rows="4" required></textarea> 
-      </div> 
-      <div class="form-group"> 
-        <label for="category">Category</label> 
-        <select id="category" name="category" required onchange="updateSubcategories()"> 
-          <option value="">Select Category</option> 
-          <option value="lands">Lands</option> 
-          <option value="residential">Residential</option> 
-          <option value="commercial">Commercial</option> 
-          <option value="industrial">Industrial</option> 
-          <option value="agriculture">Agriculture</option> 
-          <option value="government">Government</option> 
-        </select> 
-      </div> 
-      <div class="form-group"> 
-        <label for="subcategory">Subcategory</label> 
-        <select id="subcategory" name="subcategory" required> 
-          <option value="">Select Subcategory</option> 
-        </select> 
-      </div> 
-      <div class="form-group"> 
-        <label for="images">Property Images</label> 
-        <input type="file" id="images" name="images" accept="image/*" multiple required> 
-      </div> 
-      <button type="button" class="btn" id="upload-btn">Upload Property</button> 
-    </form> 
-    <h2>Manage Properties</h2> 
-    <div id="property-list" class="property-list"> 
-      <!-- Properties will be listed here --> 
-    </div> 
-  </div> 
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Admin Dashboard</h1>
+  </header>
+  <div class="container">
+    <h2>Add New Property</h2>
+    <form id="upload-form">
+      <div class="form-group">
+        <label for="title">Title</label>
+        <input type="text" id="title" name="title" required>
+      </div>
+      <div class="form-group">
+        <label for="price">Price</label>
+        <input type="number" id="price" name="price" required>
+      </div>
+      <div class="form-group">
+        <label for="location">Location</label>
+        <input type="text" id="location" name="location" required>
+      </div>
+      <div class="form-group">
+        <label for="description">Description</label>
+        <textarea id="description" name="description" rows="4" required></textarea>
+      </div>
+      <div class="form-group">
+        <label for="category">Category</label>
+        <select id="category" name="category" required onchange="updateSubcategories()">
+          <option value="">Select Category</option>
+          <option value="lands">Lands</option>
+          <option value="residential">Residential</option>
+          <option value="commercial">Commercial</option>
+          <option value="industrial">Industrial</option>
+          <option value="agriculture">Agriculture</option>
+          <option value="government">Government</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="subcategory">Subcategory</label>
+        <select id="subcategory" name="subcategory" required>
+          <option value="">Select Subcategory</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="images">Property Images</label>
+        <input type="file" id="images" name="images" accept="image/*" multiple required>
+      </div>
+      <button type="button" class="btn" id="upload-btn">Upload Property</button>
+    </form>
 
-  <!-- Firebase SDKs --> 
-  <script src="https://www.gstatic.com/firebasejs/9.13.0/firebase-app-compat.js"></script> 
-  <script src="https://www.gstatic.com/firebasejs/9.13.0/firebase-storage-compat.js"></script> 
-  <script src="https://www.gstatic.com/firebasejs/9.13.0/firebase-database-compat.js"></script> 
+    <h2>Manage Properties</h2>
+    <div id="property-list" class="property-list">
+      <!-- Properties will be listed here -->
+    </div>
+  </div>
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.13.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.13.0/firebase-storage-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.13.0/firebase-database-compat.js"></script>
   <script>
     // Firebase configuration
     const firebaseConfig = {
@@ -238,7 +239,6 @@
             <p><strong>Subcategory:</strong> ${property.subcategory}</p>
             ${propertyImages}
             <div class="actions">
-              <button class="edit">Edit</button>
               <button class="delete" onclick="deleteProperty('${childSnapshot.key}')">Delete</button>
             </div>
           `;
@@ -249,18 +249,17 @@
 
     // Delete property
     function deleteProperty(propertyId) {
-      database.ref('properties/' + propertyId).remove()
-        .then(() => {
-          alert('Property deleted successfully!');
-          displayProperties();
-        })
-        .catch(error => {
-          console.error('Error deleting property:', error);
-        });
+      if (confirm('Are you sure you want to delete this property?')) {
+        database.ref('properties/' + propertyId).remove();
+        alert('Property deleted successfully!');
+        displayProperties();
+      }
     }
 
-    // Initial call to display properties
-    displayProperties();
+    // Load properties on page load
+    window.onload = function() {
+      displayProperties();
+    };
   </script>
 </body>
 </html/>
