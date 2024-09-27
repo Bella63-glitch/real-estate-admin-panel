@@ -131,9 +131,7 @@
   <script src="https://www.gstatic.com/firebasejs/9.13.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.13.0/firebase-storage-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.13.0/firebase-database-compat.js"></script>
-
   <script>
-    // Firebase configuration
     const firebaseConfig = {
       apiKey: "AIzaSyBFcaYolaeuZ5QRUt5qS9gTFf4GW-LYIZY",
       authDomain: "legacy-genuine-properties.firebaseapp.com",
@@ -189,76 +187,98 @@
       const subcategory = document.getElementById('subcategory').value;
       const files = document.getElementById('images').files;
 
-      if (files.length > 0) {
-        let imageUrls = [];
-
-        Array.from(files).forEach(file => {
-          const storageRef = storage.ref('property-images/' + file.name);
-          storageRef.put(file).then(() => {
-            storageRef.getDownloadURL().then(url => {
-              imageUrls.push(url);
-
-              if (imageUrls.length === files.length) {
-                const propertyData = {
-                  title: title,
-                  price: price,
-                  location: location,
-                  description: description,
-                  category: category,
-                  subcategory: subcategory,
-                  imageUrls: imageUrls
-                };
-
-                database.ref('properties').push(propertyData);
-                alert('Legacy Genuine Properties says: Property uploaded successfully!');
-                displayProperties();
-              }
-            });
-          });
-        });
+      if (!files.length) {
+        alert('Please select at least one image.');
+        return;
       }
+
+      let imageUrls = [];
+      let uploadedCount = 0;
+
+      Array.from(files).forEach((file, index) => {
+        const storageRef = storage.ref(`property-images/${file.name}`);
+        storageRef.put(file).then(snapshot => {
+          snapshot.ref.getDownloadURL().then(url => {
+            imageUrls.push(url);
+            uploadedCount++;
+
+            if (uploadedCount === files.length) {
+              // After all images are uploaded, push the property data
+              const propertyData = {
+                title: title,
+                price: price,
+                location: location,
+                description: description,
+                category: category,
+                subcategory: subcategory,
+                imageUrls: imageUrls
+              };
+
+              // Push to Firebase Realtime Database
+              database.ref('properties').push(propertyData)
+                .then(() => {
+                  alert('Property uploaded successfully!');
+                  displayProperties();
+                })
+                .catch(error => {
+                  console.error('Error uploading property:', error);
+                });
+            }
+          });
+        }).catch(error => {
+          console.error('Error uploading image:', error);
+        });
+      });
     });
 
-    // Display properties
+    // Function to display properties from Firebase
     function displayProperties() {
       const propertyList = document.getElementById('property-list');
-      propertyList.innerHTML = ''; // Clear the list
+      propertyList.innerHTML = '';
 
-      database.ref('properties').on('value', snapshot => {
+      database.ref('properties').once('value', snapshot => {
         snapshot.forEach(childSnapshot => {
           const property = childSnapshot.val();
           const propertyItem = document.createElement('div');
-          propertyItem.className = 'property-item';
+          propertyItem.classList.add('property-item');
 
-          const propertyImages = property.imageUrls.map(url => `<img src="${url}" alt="Property Image">`).join('');
+          let imagesHtml = '';
+          property.imageUrls.forEach(url => {
+            imagesHtml += `<img src="${url}" alt="Property Image">`;
+          });
+
           propertyItem.innerHTML = `
             <h3>${property.title}</h3>
-            <p><strong>Price:</strong> ${property.price}</p>
-            <p><strong>Location:</strong> ${property.location}</p>
-            <p><strong>Description:</strong> ${property.description}</p>
-            <p><strong>Category:</strong> ${property.category}</p>
-            <p><strong>Subcategory:</strong> ${property.subcategory}</p>
-            ${propertyImages}
-            <div class="actions">
-              <button class="delete" onclick="deleteProperty('${childSnapshot.key}')<button class="delete" onclick="deleteProperty('${childSnapshot.key}')">Delete</button>
-            </div>
+            <p>Price: ${property.price}</p>
+            <p>Location: ${property.location}</p>
+            <p>Description: ${property.description}</p>
+            <p>Category: ${property.category}</p>
+            <p>Subcategory: ${property.subcategory}</p>
+            ${imagesHtml}
           `;
+
+          const actionsDiv = document.createElement('div');
+          actionsDiv.classList.add('actions');
+          const deleteButton = document.createElement('button');
+          deleteButton.textContent = 'Delete';
+          deleteButton.addEventListener('click', () => {
+            database.ref('properties/' + childSnapshot.key).remove().then(() => {
+              alert('Property deleted successfully.');
+              displayProperties();
+            }).catch(error => {
+              console.error('Error deleting property:', error);
+            });
+          });
+
+          actionsDiv.appendChild(deleteButton);
+          propertyItem.appendChild(actionsDiv);
           propertyList.appendChild(propertyItem);
         });
       });
     }
 
-    // Delete a property
-    function deleteProperty(propertyId) {
-      if (confirm('Are you sure you want to delete this property?')) {
-        database.ref('properties/' + propertyId).remove();
-        alert('Property deleted successfully!');
-        displayProperties();
-      }
-    }
-
-    // Initial call to display properties
-    displayProperties();
+    // Display properties on page load
+    window.onload = displayProperties;
   </script>
 </body>
-</html/>
+</html>
