@@ -131,6 +131,7 @@
   <script src="https://www.gstatic.com/firebasejs/9.13.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.13.0/firebase-storage-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.13.0/firebase-database-compat.js"></script>
+
   <script>
     // Firebase configuration
     const firebaseConfig = {
@@ -239,7 +240,7 @@
             <p><strong>Subcategory:</strong> ${property.subcategory}</p>
             ${propertyImages}
             <div class="actions">
-              <button class="delete" onclick="deleteProperty('${childSnapshot.key}')">Delete</button>
+              <button class="delete" onclick="deleteProperty('${childSnapshot.key}')<button class="delete" onclick="deleteProperty('${childSnapshot.key}')">Delete</button>
             </div>
           `;
           propertyList.appendChild(propertyItem);
@@ -247,7 +248,7 @@
       });
     }
 
-    // Delete property
+    // Delete a property
     function deleteProperty(propertyId) {
       if (confirm('Are you sure you want to delete this property?')) {
         database.ref('properties/' + propertyId).remove();
@@ -256,10 +257,8 @@
       }
     }
 
-    // Load properties on page load
-    window.onload = function() {
-      displayProperties();
-    };
+    // Initial call to display properties
+    displayProperties();
   </script>
 </body>
 </html/>
