@@ -85,7 +85,10 @@
                     <option value="">Select Category</option>
                     <option value="lands">Lands</option>
                     <option value="residential">Residential</option>
-                    <option value="commercial">Commercial</option>
+                    <option value="commercial">Commercial Properties</option>
+                    <option value="industrial">Industrial Properties</option>
+                    <option value="agriculture">Agriculture Properties</option>
+                    <option value="government">Government Properties</option>
                 </select>
             </div>
             <div class="form-group">
@@ -103,14 +106,13 @@
         <div id="property-list" class="property-list"></div>
     </div>
 
-    <script type="module">
-        // Import the functions you need from the SDKs you need
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
-        import { getDatabase, ref, push, onValue, remove, set } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-database.js";
-        import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-storage.js";
-        import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-analytics.js";
+    <!-- Firebase Compatibility Scripts -->
+    <script src="https://www.gstatic.com/firebasejs/9.13.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.13.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.13.0/firebase-storage-compat.js"></script>
 
-        // Your web app's Firebase configuration
+    <script>
+        // Initialize Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyBFcaYolaeuZ5QRUt5qS9gTFf4GW-LYIZY",
             authDomain: "legacy-genuine-properties.firebaseapp.com",
@@ -121,17 +123,17 @@
             appId: "1:795578734998:web:5a06078443af3bec4ee5b7",
             measurementId: "G-RRZ7M9TW8T"
         };
-
-        // Initialize Firebase
-        const app = initializeApp(firebaseConfig);
-        const analytics = getAnalytics(app);
-        const database = getDatabase(app);
-        const storage = getStorage(app);
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        const storage = firebase.storage();
 
         const subcategoryData = {
-            lands: ['Residential Lands', 'Commercial Lands'],
-            residential: ['Apartments', 'Bungalows'],
-            commercial: ['Offices', 'Shops']
+            lands: ['Residential Lands', 'Commercial Lands', 'Industrial Lands'],
+            residential: ['Apartment', 'Mansionette', 'Bungalows', 'Villas', 'Farmhouse'],
+            commercial: ['Offices', 'Institution', 'Shopping', 'Hotels', 'Special Purpose'],
+            industrial: ['Factories', 'Warehouse/Distribution', 'Flexible Spaces', 'Special Purpose'],
+            agriculture: ['Green Homes', 'Flower Homes', 'Flexible Spaces'],
+            government: ['Affordable Homes']
         };
 
         function updateSubcategories() {
@@ -159,15 +161,14 @@
             if (files.length > 0) {
                 let imageUrls = [];
                 for (const file of files) {
-                    const fileRef = storageRef(storage, `images/${file.name}`);
-                    await uploadBytes(fileRef, file);
-                    const url = await getDownloadURL(fileRef);
+                    const storageRef = storage.ref(`images/${file.name}`);
+                    await storageRef.put(file);
+                    const url = await storageRef.getDownloadURL();
                     imageUrls.push(url);
                 }
 
-                const newProperty = { title, price, location, category, subcategory, imageUrls, isSample: false };
-                const propertyRef = ref(database, `properties/${category}/${subcategory}`);
-                await push(propertyRef, newProperty);
+                const newProperty = { title, price, location, category, subcategory, imageUrls };
+                await database.ref(`properties/${category}/${subcategory}`).push(newProperty);
                 displayProperties();
             } else {
                 alert('Please select at least one image.');
@@ -178,17 +179,12 @@
             const propertyList = document.getElementById('property-list');
             propertyList.innerHTML = '';
 
-            const propertiesRef = ref(database, 'properties');
-            onValue(propertiesRef, snapshot => {
+            database.ref('properties').on('value', snapshot => {
                 const properties = [];
                 snapshot.forEach(catSnap => {
                     catSnap.forEach(subSnap => {
                         subSnap.forEach(propSnap => {
-                            const property = { ...propSnap.val(), id: propSnap.key };
-                            // Hide sample properties
-                            if (!property.isSample) {
-                                properties.push(property);
-                            }
+                            properties.push({ ...propSnap.val(), id: propSnap.key });
                         });
                     });
                 });
@@ -206,8 +202,9 @@
                         <h3>${property.title}</h3>
                         <p>Price: ${property.price}</p>
                         <p>Location: ${property.location}</p>
+                        <p>Category: ${property.category}</p>
+                        <p>Subcategory: ${property.subcategory.replace(/-/g, ' ')}</p>
                         <div>${imagesHtml}</div>
-                        <button onclick="editProperty('${property.id}', '${property.category}', '${property.subcategory}')">Edit</button>
                         <button onclick="deleteProperty('${property.id}', '${property.category}', '${property.subcategory}')">Delete</button>
                     `;
                     propertyList.prepend(propertyItem);
@@ -215,92 +212,16 @@
             });
         }
 
-        window.deleteProperty = function(id, category, subcategory) {
+        function deleteProperty(id, category, subcategory) {
             if (confirm('Are you sure you want to delete this property?')) {
-                const propertyRef = ref(database, `properties/${category}/${subcategory}/${id}`);
-                remove(propertyRef).then(() => {
+                database.ref(`properties/${category}/${subcategory}/${id}`).remove().then(() => {
                     alert('Property deleted successfully!');
                     displayProperties();
                 });
             }
-        };
-
-        window.editProperty = function(id, category, subcategory) {
-            const propertyRef = ref(database, `properties/${category}/${subcategory}/${id}`);
-            onValue(propertyRef, snapshot => {
-                const property = snapshot.val();
-                document.getElementById('title').value = property.title;
-                document.getElementById('price').value = property.price;
-                document.getElementById('location').value = property.location;
-                document.getElementById('category').value = property.category;
-                updateSubcategories(); // Update subcategories based on category
-
-                // Set the selected subcategory
-                document.getElementById('subcategory').value = property.subcategory;
-
-                // Optionally, you can add a hidden input to store the property ID for further use
-                const hiddenInput = document.createElement('input');
-                hiddenInput.type = 'hidden';
-                hiddenInput.id = 'edit-property-id';
-                hiddenInput.value = id;
-                document.getElementById('upload-form').appendChild(hiddenInput);
-
-                // Update the button to save changes
-                const uploadBtn = document.getElementById('upload-btn');
-                uploadBtn.textContent = 'Save Changes';
-                uploadBtn.onclick = function () {
-                    saveChanges(id, category, subcategory);
-                };
-            });
-        };
-
-        function saveChanges(id, category, subcategory) {
-            const title = document.getElementById('title').value;
-            const price = document.getElementById('price').value;
-            const location = document.getElementById('location').value;
-            const files = document.getElementById('images').files;
-
-            const propertyRef = ref(database, `properties/${category}/${subcategory}/${id}`);
-
-            // Update the property details
-            const updatedProperty = { title, price, location, category, subcategory, isSample: false };
-
-            // If new images are uploaded, upload and get their URLs
-            if (files.length > 0) {
-                let imageUrls = [];
-                const uploadPromises = Array.from(files).map(async (file) => {
-                    const fileRef = storageRef(storage, `images/${file.name}`);
-                    await uploadBytes(fileRef, file);
-                    const url = await getDownloadURL(fileRef);
-                    imageUrls.push(url);
-                });
-
-                // Wait for all images to be uploaded
-                Promise.all(uploadPromises).then(() => {
-                    updatedProperty.imageUrls = imageUrls;
-                    set(propertyRef, updatedProperty).then(() => {
-                        alert('Property updated successfully!');
-                        resetForm();
-                        displayProperties();
-                    });
-                });
-            } else {
-                set(propertyRef, { ...updatedProperty, imageUrls: [] }).then(() => {
-                    alert('Property updated successfully!');
-                    resetForm();
-                    displayProperties();
-                });
-            }
-        }
-
-        function resetForm() {
-            document.getElementById('upload-form').reset();
-            document.getElementById('upload-btn').textContent = 'Upload';
-            const hiddenInput = document.getElementById('edit-property-id');
-            if (hiddenInput) hiddenInput.remove(); // Remove the hidden input
         }
 
         displayProperties();
     </script>
 </body>
-</html>    
+</html>
