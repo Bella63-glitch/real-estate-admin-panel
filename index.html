@@ -166,6 +166,7 @@
                     await storageRef.put(file);
                     const url = await storageRef.getDownloadURL();
                     imageUrls.push(url);
+                    console.log('Uploaded:', file.name); // Log uploaded file names
                 }
 
                 const newProperty = { title, price, location, category, subcategory, imageUrls };
@@ -173,8 +174,8 @@
                 alert('Property uploaded successfully!');
                 displayProperties();
             } catch (error) {
-                console.error('Failed to upload property:', error);
-                alert('Failed to upload property. Please try again.');
+                console.error('Error uploading property:', error.message); // Enhanced error logging
+                alert('Failed to upload property. ' + error.message); // Informative alert
             }
         });
 
