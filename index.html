@@ -31,7 +31,7 @@
             display: block;
             margin-bottom: 5px;
         }
-        .form-group input, .form-group textarea, .form-group select {
+        .form-group input, .form-group select {
             width: 100%;
             padding: 8px;
             box-sizing: border-box;
@@ -42,9 +42,6 @@
             padding: 10px 15px;
             cursor: pointer;
             border: none;
-        }
-        .property-list {
-            margin-top: 20px;
         }
     </style>
 </head>
@@ -69,7 +66,7 @@
             </div>
             <div class="form-group">
                 <label for="category">Category</label>
-                <select id="category" required onchange="updateSubcategories()">
+                <select id="category" required>
                     <option value="">Select Category</option>
                     <option value="lands">Lands</option>
                     <option value="residential">Residential</option>
@@ -81,7 +78,9 @@
             </div>
             <div class="form-group">
                 <label for="subcategory">Subcategory</label>
-                <select id="subcategory" required></select>
+                <select id="subcategory" required>
+                    <option value="">Select Subcategory</option>
+                </select>
             </div>
             <div class="form-group">
                 <label for="images">Images</label>
@@ -89,12 +88,8 @@
             </div>
             <button type="button" class="btn" id="upload-btn">Upload</button>
         </form>
-
-        <h2>Manage Properties</h2>
-        <div id="property-list" class="property-list"></div>
     </div>
 
-    <!-- Firebase SDKs -->
     <script type="module">
         // Import Firebase modules
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
@@ -123,16 +118,18 @@
             lands: ['Residential Lands', 'Commercial Lands', 'Industrial Lands'],
             residential: ['Apartment', 'Mansionette', 'Bungalows', 'Villas', 'Farmhouse'],
             commercial: ['Offices', 'Institution', 'Shopping', 'Hotels', 'Special Purpose'],
-            industrial: ['Factories', 'Warehouse_Distribution', 'Flexible Spaces', 'Special Purpose'],
+            industrial: ['Factories', 'Warehouse Distribution', 'Flexible Spaces', 'Special Purpose'],
             agriculture: ['Green Homes', 'Flower Homes', 'Flexible Spaces'],
             government: ['Affordable Homes']
         };
 
-        // Update subcategories dynamically
-        function updateSubcategories() {
+        // Update subcategories based on selected category
+        document.getElementById('category').addEventListener('change', () => {
             const category = document.getElementById('category').value;
             const subcategorySelect = document.getElementById('subcategory');
+
             subcategorySelect.innerHTML = '<option value="">Select Subcategory</option>';
+            
             if (subcategoryData[category]) {
                 subcategoryData[category].forEach(sub => {
                     const option = document.createElement('option');
@@ -141,14 +138,9 @@
                     subcategorySelect.appendChild(option);
                 });
             }
-        }
+        });
 
-        // Add property to the database
-        async function addProperty(path, property) {
-            await push(ref(database, path), property);
-        }
-
-        // Handle upload button click
+        // Handle property upload
         document.getElementById('upload-btn').addEventListener('click', async () => {
             try {
                 const title = document.getElementById('title').value;
@@ -169,9 +161,9 @@
                 }
 
                 const newProperty = { title, price, location, imageUrls };
-                const path = `properties/${category}/${subcategory.replace(/-/g, '_')}`;
+                const path = `properties/${category}/${subcategory}`;
 
-                await addProperty(path, newProperty);
+                await push(ref(database, path), newProperty);
                 alert('Property uploaded successfully!');
             } catch (error) {
                 console.error('Error uploading property:', error);
