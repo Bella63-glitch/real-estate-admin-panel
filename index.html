@@ -150,7 +150,13 @@
                 const subcategory = document.getElementById('subcategory').value;
                 const files = document.getElementById('images').files;
 
-                if (files.length === 0) throw new Error('No images selected.');
+                if (!category || !subcategory) {
+                    throw new Error('Please select both category and subcategory.');
+                }
+
+                if (files.length === 0) {
+                    throw new Error('No images selected.');
+                }
 
                 let imageUrls = [];
                 for (const file of files) {
@@ -163,8 +169,13 @@
                 const newProperty = { title, price, location, imageUrls };
                 const path = `properties/${category}/${subcategory}`;
 
+                // Ensure newProperty is pushed under the correct category and subcategory
                 await push(ref(database, path), newProperty);
                 alert('Property uploaded successfully!');
+                
+                // Reset the form after successful upload
+                document.getElementById('upload-form').reset();
+                document.getElementById('subcategory').innerHTML = '<option value="">Select Subcategory</option>'; // Reset subcategory
             } catch (error) {
                 console.error('Error uploading property:', error);
                 alert('Failed to upload property. ' + error.message);
@@ -173,3 +184,4 @@
     </script>
 </body>
 </html>
+    
