@@ -85,10 +85,10 @@
                     <option value="">Select Category</option>
                     <option value="lands">Lands</option>
                     <option value="residential">Residential</option>
-                    <option value="commercial">Commercial Properties</option>
+                    <option value="commercial">Commercial</option>
                     <option value="industrial">Industrial</option>
                     <option value="agriculture">Agriculture</option>
-                    <option value="government">Government Properties</option>
+                    <option value="government">Government</option>
                 </select>
             </div>
             <div class="form-group">
@@ -111,7 +111,6 @@
     <script src="https://www.gstatic.com/firebasejs/9.13.0/firebase-storage-compat.js"></script>
 
     <script>
-        // Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyBFcaYolaeuZ5QRUt5qS9gTFf4GW-LYIZY",
             authDomain: "legacy-genuine-properties.firebaseapp.com",
@@ -150,9 +149,8 @@
             }
         }
 
-        // Function to add properties to the correct Firebase path
-        function addProperty(path, property) {
-            return database.ref(path).push(property);
+        async function addProperty(path, property) {
+            await database.ref(path).push(property);
         }
 
         document.getElementById('upload-btn').addEventListener('click', async () => {
@@ -164,10 +162,6 @@
                 const subcategory = document.getElementById('subcategory').value;
                 const files = document.getElementById('images').files;
 
-                if (!category || !subcategory) {
-                    throw new Error('Please select both category and subcategory.');
-                }
-
                 if (files.length === 0) throw new Error('No images selected.');
 
                 let imageUrls = [];
@@ -178,16 +172,9 @@
                     imageUrls.push(url);
                 }
 
-                const newProperty = {
-                    title,
-                    price,
-                    location,
-                    imageUrls
-                };
-
+                const newProperty = { title, price, location, imageUrls };
                 const path = `properties/${category}/${subcategory}`;
                 await addProperty(path, newProperty);
-
                 alert('Property uploaded successfully!');
                 displayProperties();
             } catch (error) {
@@ -201,31 +188,21 @@
             propertyList.innerHTML = '';
 
             database.ref('properties').on('value', snapshot => {
-                const properties = [];
                 snapshot.forEach(catSnap => {
                     catSnap.forEach(subSnap => {
                         subSnap.forEach(propSnap => {
-                            properties.push({ ...propSnap.val(), id: propSnap.key });
+                            const property = propSnap.val();
+                            const propertyItem = document.createElement('div');
+                            propertyItem.className = 'property-item';
+                            propertyItem.innerHTML = `
+                                <h3>${property.title}</h3>
+                                <p>Price: ${property.price}</p>
+                                <p>Location: ${property.location}</p>
+                                ${property.imageUrls.map(url => `<img src="${url}" alt="Image">`).join('')}
+                            `;
+                            propertyList.appendChild(propertyItem);
                         });
                     });
-                });
-
-                properties.reverse().forEach(property => {
-                    const propertyItem = document.createElement('div');
-                    propertyItem.className = 'property-item';
-
-                    let imagesHtml = '';
-                    property.imageUrls.forEach(url => {
-                        imagesHtml += `<img src="${url}" alt="Property Image">`;
-                    });
-
-                    propertyItem.innerHTML = `
-                        <h3>${property.title}</h3>
-                        <p>Price: ${property.price}</p>
-                        <p>Location: ${property.location}</p>
-                        <div>${imagesHtml}</div>
-                    `;
-                    propertyList.prepend(propertyItem);
                 });
             });
         }
