@@ -173,41 +173,15 @@
                 }
 
                 const newProperty = { title, price, location, imageUrls };
-                const path = `properties/${category}/${subcategory}`;
+                const path = `${category}/${subcategory}`;
+
                 await addProperty(path, newProperty);
                 alert('Property uploaded successfully!');
-                displayProperties();
             } catch (error) {
-                console.error('Error uploading property:', error.message);
+                console.error('Error uploading property:', error);
                 alert('Failed to upload property. ' + error.message);
             }
         });
-
-        function displayProperties() {
-            const propertyList = document.getElementById('property-list');
-            propertyList.innerHTML = '';
-
-            database.ref('properties').on('value', snapshot => {
-                snapshot.forEach(catSnap => {
-                    catSnap.forEach(subSnap => {
-                        subSnap.forEach(propSnap => {
-                            const property = propSnap.val();
-                            const propertyItem = document.createElement('div');
-                            propertyItem.className = 'property-item';
-                            propertyItem.innerHTML = `
-                                <h3>${property.title}</h3>
-                                <p>Price: ${property.price}</p>
-                                <p>Location: ${property.location}</p>
-                                ${property.imageUrls.map(url => `<img src="${url}" alt="Image">`).join('')}
-                            `;
-                            propertyList.appendChild(propertyItem);
-                        });
-                    });
-                });
-            });
-        }
-
-        displayProperties();
     </script>
 </body>
 </html>
