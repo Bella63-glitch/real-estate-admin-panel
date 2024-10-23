@@ -174,10 +174,12 @@
                 await uploadBytes(imgRef, file);
                 const url = await getDownloadURL(imgRef);
                 imageUrls.push(url);
+                console.log(`Uploaded image URL: ${url}`);  // Log image URLs for debugging
             }
 
             const newProperty = { title, price, location, imageUrls };
             const path = `categories/${category}/${subcategory}`;
+            console.log(`Firebase path: ${path}`);  // Log path for debugging
             await push(ref(database, path), newProperty);
 
             loadProperties(category, subcategory);
@@ -200,7 +202,12 @@
                 const property = childSnapshot.val();
                 const div = document.createElement('div');
                 div.className = 'property-item';
-                div.innerHTML = `<h4>${property.title}</h4><p>Price: ${property.price}</p><p>Location: ${property.location}</p>`;
+                div.innerHTML = `
+                    <h4>${property.title}</h4>
+                    <p>Price: ${property.price}</p>
+                    <p>Location: ${property.location}</p>
+                    ${property.imageUrls.map(url => `<img src="${url}" alt="${property.title}" style="max-width: 100px; margin: 5px;">`).join('')}
+                `;
                 propertyList.appendChild(div);
             });
         });
