@@ -56,14 +56,24 @@
             padding: 10px;
             border: 1px solid #ddd;
             margin-bottom: 10px;
-            position: relative;
         }
-        img {
+        .property-item img {
             max-width: 100px;
-            margin: 5px;
+            margin-right: 10px;
         }
-        .actions button {
+        .property-actions {
+            margin-top: 10px;
+        }
+        .property-actions button {
+            background-color: #f44336;
+            color: white;
+            padding: 5px 10px;
+            cursor: pointer;
+            border: none;
             margin-right: 5px;
+        }
+        .edit-btn {
+            background-color: #4CAF50;
         }
     </style>
 </head>
@@ -88,7 +98,7 @@
         </div>
         <div class="form-group">
             <label for="category">Category</label>
-            <select id="category" required onchange="updateSubcategories()">
+            <select id="category" required>
                 <option value="">Select Category</option>
                 <option value="lands">Lands</option>
                 <option value="residential">Residential</option>
@@ -117,109 +127,149 @@
 </div>
 
 <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
-  import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-analytics.js";
-  import { getDatabase, ref, push, set, remove, onValue } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-database.js";
-  import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-storage.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
+    import { getDatabase, ref, push, onValue, update, remove } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js";
+    import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-storage.js";
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyBFcaYolaeuZ5QRUt5qS9gTFf4GW-LYIZY",
-    authDomain: "legacy-genuine-properties.firebaseapp.com",
-    databaseURL: "https://legacy-genuine-properties-default-rtdb.firebaseio.com",
-    projectId: "legacy-genuine-properties",
-    storageBucket: "legacy-genuine-properties.appspot.com",
-    messagingSenderId: "795578734998",
-    appId: "1:795578734998:web:5a06078443af3bec4ee5b7",
-    measurementId: "G-RRZ7M9TW8T"
-  };
+    const firebaseConfig = {
+        apiKey: "AIzaSyBFcaYolaeuZ5QRUt5qS9gTFf4GW-LYIZY",
+        authDomain: "legacy-genuine-properties.firebaseapp.com",
+        databaseURL: "https://legacy-genuine-properties-default-rtdb.firebaseio.com",
+        projectId: "legacy-genuine-properties",
+        storageBucket: "legacy-genuine-properties.appspot.com",
+        messagingSenderId: "795578734998",
+        appId: "1:795578734998:web:5a06078443af3bec4ee5b7",
+        measurementId: "G-RRZ7M9TW8T"
+    };
 
-  const app = initializeApp(firebaseConfig);
-  const analytics = getAnalytics(app);
-  const database = getDatabase(app);
-  const storage = getStorage(app);
+    const app = initializeApp(firebaseConfig);
+    const database = getDatabase(app);
+    const storage = getStorage(app);
 
-  const subcategoryData = {
-    lands: ['Residential Lands', 'Commercial Lands', 'Industrial Lands'],
-    residential: ['Apartment', 'Mansionette', 'Bungalows', 'Villas', 'Farmhouse'],
-    commercial: ['Offices', 'Institution', 'Shopping', 'Hotels', 'Special Purpose'],
-    industrial: ['Factories', 'Warehouse Distribution', 'Flexible Spaces', 'Special Purpose'],
-    agriculture: ['Green Homes', 'Flower Homes', 'Flexible Spaces'],
-    government: ['Affordable Homes']
-  };
+    const subcategoryData = {
+        lands: ['Residential Lands', 'Commercial Lands', 'Industrial Lands'],
+        residential: ['Apartment', 'Mansionette', 'Bungalows', 'Villas', 'Farmhouse'],
+        commercial: ['Offices', 'Institution', 'Shopping', 'Hotels', 'Special Purpose'],
+        industrial: ['Factories', 'Warehouse Distribution', 'Flexible Spaces', 'Special Purpose'],
+        agriculture: ['Green Homes', 'Flower Homes', 'Flexible Spaces'],
+        government: ['Affordable Homes']
+    };
 
-  function updateSubcategories() {
-    const category = document.getElementById('category').value;
-    const subcategorySelect = document.getElementById('subcategory');
-    subcategorySelect.innerHTML = '<option value="">Select Subcategory</option>';
-    if (subcategoryData[category]) {
-      subcategoryData[category].forEach(sub => {
-        const option = document.createElement('option');
-        option.value = sub.toLowerCase().replace(/\s+/g, '-');
-        option.textContent = sub;
-        subcategorySelect.appendChild(option);
-      });
-    }
-  }
+    document.getElementById('category').addEventListener('change', () => {
+        const category = document.getElementById('category').value;
+        const subcategorySelect = document.getElementById('subcategory');
 
-  document.getElementById('upload-btn').addEventListener('click', async () => {
-    const title = document.getElementById('title').value;
-    const price = document.getElementById('price').value;
-    const location = document.getElementById('location').value;
-    const category = document.getElementById('category').value;
-    const subcategory = document.getElementById('subcategory').value;
-    const files = document.getElementById('images').files;
-
-    if (!files.length) {
-      alert('Please select at least one image.');
-      return;
-    }
-
-    const imageUrls = await Promise.all([...files].map(async file => {
-      const fileRef = storageRef(storage, `images/${file.name}`);
-      await uploadBytes(fileRef, file);
-      return await getDownloadURL(fileRef);
-    }));
-
-    const property = { title, price, location, category, subcategory, imageUrls };
-    const propertyRef = push(ref(database, `properties/${category}/${subcategory}`));
-    await set(propertyRef, property);
-    alert('Property uploaded successfully!');
-    loadProperties();
-  });
-
-  function loadProperties() {
-    const propertyList = document.getElementById('property-list');
-    propertyList.innerHTML = '<h3>Uploaded Properties</h3>';
-    onValue(ref(database, 'properties'), snapshot => {
-      snapshot.forEach(categorySnap => {
-        categorySnap.forEach(subSnap => {
-          subSnap.forEach(propertySnap => {
-            const property = propertySnap.val();
-            const div = document.createElement('div');
-            div.className = 'property-item';
-            div.innerHTML = `
-              <h4>${property.title}</h4>
-              <p>Price: $${property.price}</p>
-              <p>Location: ${property.location}</p>
-              ${property.imageUrls.map(url => `<img src="${url}" />`).join('')}
-              <button onclick="deleteProperty('${categorySnap.key}', '${subSnap.key}', '${propertySnap.key}')">Delete</button>
-            `;
-            propertyList.appendChild(div);
-          });
-        });
-      });
+        subcategorySelect.innerHTML = '<option value="">Select Subcategory</option>';
+        if (subcategoryData[category]) {
+            subcategoryData[category].forEach(sub => {
+                const option = document.createElement('option');
+                option.value = sub.toLowerCase().replace(/\s+/g, '');
+                option.textContent = sub;
+                subcategorySelect.appendChild(option);
+            });
+        }
     });
-  }
 
-  function deleteProperty(category, subcategory, id) {
-    remove(ref(database, `properties/${category}/${subcategory}/${id}`))
-      .then(() => {
-        alert('Property deleted successfully!');
-        loadProperties();
-      });
-  }
+    document.getElementById('upload-btn').addEventListener('click', async () => {
+        const loadingIndicator = document.getElementById('loading');
+        loadingIndicator.style.display = 'block';
 
-  loadProperties();
+        try {
+            const title = document.getElementById('title').value;
+            const price = document.getElementById('price').value;
+            const location = document.getElementById('location').value;
+            const category = document.getElementById('category').value;
+            const subcategory = document.getElementById('subcategory').value;
+            const files = document.getElementById('images').files;
+
+            if (!category || !subcategory) {
+                throw new Error('Category or subcategory is missing.');
+            }
+
+            let imageUrls = [];
+            for (const file of files) {
+                const imgRef = storageRef(storage, `images/${file.name}`);
+                await uploadBytes(imgRef, file);
+                const url = await getDownloadURL(imgRef);
+                imageUrls.push(url);
+            }
+
+            const newProperty = { title, price, location, imageUrls };
+            const path = `categories/${category}/${subcategory}`;
+            const newPropertyRef = await push(ref(database, path), newProperty);
+
+            loadProperties(category, subcategory);
+        } catch (error) {
+            console.error(error);
+            alert('Failed to upload property: ' + error.message);
+        } finally {
+            loadingIndicator.style.display = 'none';
+        }
+    });
+
+    function loadProperties(category, subcategory) {
+        const path = `categories/${category}/${subcategory}`;
+        const propertyRef = ref(database, path);
+        const propertyList = document.getElementById('property-list');
+
+        onValue(propertyRef, (snapshot) => {
+            propertyList.innerHTML = '<h3>Uploaded Properties</h3>';
+            snapshot.forEach(childSnapshot => {
+                const property = childSnapshot.val();
+                const propertyId = childSnapshot.key;
+                const div = document.createElement('div');
+                div.className = 'property-item';
+                div.innerHTML = `
+                    <h4>${property.title}</h4>
+                    <p>Price: ${property.price}</p>
+                    <p>Location: ${property.location}</p>
+                    ${property.imageUrls.map(url => `<img src="${url}" alt="${property.title}">`).join('')}
+                    <div class="property-actions">
+                        <button class="edit-btn" onclick="editProperty('${category}', '${subcategory}', '${propertyId}')">Edit</button>
+                        <button class="delete-btn" onclick="deleteProperty('${category}', '${subcategory}', '${propertyId}')">Delete</button>
+                    </div>
+                `;
+                propertyList.appendChild(div);
+            });
+        });
+    }
+
+    window.editProperty = function(category, subcategory, propertyId) {
+        const title = prompt('Enter new title:');
+        const price = prompt('Enter new price:');
+        const location = prompt('Enter new location:');
+
+        if (title && price && location) {
+            const path = `categories/${category}/${subcategory}/${propertyId}`;
+            update(ref(database, path), { title, price, location })
+                .then(() => {
+                    alert('Property updated successfully.');
+                    loadProperties(category, subcategory);
+                })
+                .catch((error) => {
+                    console.error(error);
+                    alert('Failed to update property: ' + error.message);
+                });
+        } else {
+            alert('All fields are required.');
+        }
+    };
+
+    window.deleteProperty = function(category, subcategory, propertyId) {
+        const confirmDelete = confirm('Are you sure you want to delete this property?');
+        if (confirmDelete) {
+            const path = `categories/${category}/${subcategory}/${propertyId}`;
+            remove(ref(database, path))
+                .then(() => {
+                    alert('Property deleted successfully.');
+                    loadProperties(category, subcategory);
+                })
+                .catch((error) => {
+                    console.error(error);
+                    alert('Failed to delete property: ' + error.message);
+                });
+        }
+    };
 </script>
 </body>
 </html>
