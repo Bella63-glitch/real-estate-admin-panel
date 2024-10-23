@@ -43,6 +43,13 @@
             cursor: pointer;
             border: none;
         }
+        #loading {
+            display: none;
+            text-align: center;
+            margin-top: 10px;
+            color: #4CAF50;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
@@ -87,6 +94,7 @@
                 <input type="file" id="images" multiple accept="image/*" required>
             </div>
             <button type="button" class="btn" id="upload-btn">Upload</button>
+            <div id="loading">Uploading property, please wait...</div>
         </form>
     </div>
 
@@ -129,7 +137,6 @@
             const subcategorySelect = document.getElementById('subcategory');
 
             subcategorySelect.innerHTML = '<option value="">Select Subcategory</option>';
-            
             if (subcategoryData[category]) {
                 subcategoryData[category].forEach(sub => {
                     const option = document.createElement('option');
@@ -142,6 +149,9 @@
 
         // Handle property upload
         document.getElementById('upload-btn').addEventListener('click', async () => {
+            const loadingIndicator = document.getElementById('loading');
+            loadingIndicator.style.display = 'block';
+
             try {
                 const title = document.getElementById('title').value;
                 const price = document.getElementById('price').value;
@@ -169,19 +179,19 @@
                 const newProperty = { title, price, location, imageUrls };
                 const path = `properties/${category}/${subcategory}`;
 
-                // Ensure newProperty is pushed under the correct category and subcategory
+                console.log('Uploading to path:', path);
                 await push(ref(database, path), newProperty);
+
                 alert('Property uploaded successfully!');
-                
-                // Reset the form after successful upload
                 document.getElementById('upload-form').reset();
-                document.getElementById('subcategory').innerHTML = '<option value="">Select Subcategory</option>'; // Reset subcategory
+                document.getElementById('subcategory').innerHTML = '<option value="">Select Subcategory</option>';
             } catch (error) {
                 console.error('Error uploading property:', error);
                 alert('Failed to upload property. ' + error.message);
+            } finally {
+                loadingIndicator.style.display = 'none';
             }
         });
     </script>
 </body>
 </html>
-    
