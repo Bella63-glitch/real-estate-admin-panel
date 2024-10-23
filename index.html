@@ -46,9 +46,16 @@
         #loading {
             display: none;
             text-align: center;
-            margin-top: 10px;
+            font-size: 16px;
             color: #4CAF50;
-            font-weight: bold;
+        }
+        .property-list {
+            margin-top: 30px;
+        }
+        .property-item {
+            padding: 10px;
+            border: 1px solid #ddd;
+            margin-bottom: 10px;
         }
     </style>
 </head>
@@ -96,15 +103,17 @@
             <button type="button" class="btn" id="upload-btn">Upload</button>
             <div id="loading">Uploading property, please wait...</div>
         </form>
+
+        <div class="property-list" id="property-list">
+            <h3>Uploaded Properties</h3>
+        </div>
     </div>
 
     <script type="module">
-        // Import Firebase modules
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
-        import { getDatabase, ref, push } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js";
+        import { getDatabase, ref, push, onValue } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js";
         import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-storage.js";
 
-        // Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyBFcaYolaeuZ5QRUt5qS9gTFf4GW-LYIZY",
             authDomain: "legacy-genuine-properties.firebaseapp.com",
@@ -116,12 +125,10 @@
             measurementId: "G-RRZ7M9TW8T"
         };
 
-        // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const database = getDatabase(app);
         const storage = getStorage(app);
 
-        // Subcategory data
         const subcategoryData = {
             lands: ['Residential Lands', 'Commercial Lands', 'Industrial Lands'],
             residential: ['Apartment', 'Mansionette', 'Bungalows', 'Villas', 'Farmhouse'],
@@ -131,7 +138,6 @@
             government: ['Affordable Homes']
         };
 
-        // Update subcategories based on selected category
         document.getElementById('category').addEventListener('change', () => {
             const category = document.getElementById('category').value;
             const subcategorySelect = document.getElementById('subcategory');
@@ -140,14 +146,13 @@
             if (subcategoryData[category]) {
                 subcategoryData[category].forEach(sub => {
                     const option = document.createElement('option');
-                    option.value = sub.toLowerCase().replace(/\s+/g, '-');
+                    option.value = sub.toLowerCase().replace(/\s+/g, '');
                     option.textContent = sub;
                     subcategorySelect.appendChild(option);
                 });
             }
         });
 
-        // Handle property upload
         document.getElementById('upload-btn').addEventListener('click', async () => {
             const loadingIndicator = document.getElementById('loading');
             loadingIndicator.style.display = 'block';
@@ -160,14 +165,6 @@
                 const subcategory = document.getElementById('subcategory').value;
                 const files = document.getElementById('images').files;
 
-                if (!category || !subcategory) {
-                    throw new Error('Please select both category and subcategory.');
-                }
-
-                if (files.length === 0) {
-                    throw new Error('No images selected.');
-                }
-
                 let imageUrls = [];
                 for (const file of files) {
                     const imgRef = storageRef(storage, `images/${file.name}`);
@@ -177,21 +174,34 @@
                 }
 
                 const newProperty = { title, price, location, imageUrls };
-                const path = `properties/${category}/${subcategory}`;
-
-                console.log('Uploading to path:', path);
+                const path = `categories/${category}/${subcategory}`;
                 await push(ref(database, path), newProperty);
 
-                alert('Property uploaded successfully!');
-                document.getElementById('upload-form').reset();
-                document.getElementById('subcategory').innerHTML = '<option value="">Select Subcategory</option>';
+                loadProperties(category, subcategory);
             } catch (error) {
-                console.error('Error uploading property:', error);
-                alert('Failed to upload property. ' + error.message);
+                console.error(error);
+                alert('Failed to upload property: ' + error.message);
             } finally {
                 loadingIndicator.style.display = 'none';
             }
         });
+
+        function loadProperties(category, subcategory) {
+            const path = `categories/${category}/${subcategory}`;
+            const propertyRef = ref(database, path);
+            const propertyList = document.getElementById('property-list');
+
+            onValue(propertyRef, (snapshot) => {
+                propertyList.innerHTML = '<h3>Uploaded Properties</h3>';
+                snapshot.forEach(childSnapshot => {
+                    const property = childSnapshot.val();
+                    const div = document.createElement('div');
+                    div.className = 'property-item';
+                    div.innerHTML = `<h4>${property.title}</h4><p>Price: ${property.price}</p><p>Location: ${property.location}</p>`;
+                    propertyList.appendChild(div);
+                });
+            });
+        }
     </script>
 </body>
 </html>
