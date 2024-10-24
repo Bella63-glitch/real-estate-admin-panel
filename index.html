@@ -1,103 +1,215 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin Panel</title>
-  <script type="module">
-    // Firebase configuration
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
-    import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-analytics.js";
-    import { getDatabase, ref, set, push } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-database.js";
-    import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-storage.js";
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+        header {
+            background-color: #002244;
+            color: white;
+            padding: 15px;
+            text-align: center;
+        }
+        .container {
+            max-width: 900px;
+            margin: 20px auto;
+            padding: 20px;
+            background: white;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+        }
+        .btn {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            cursor: pointer;
+            border: none;
+        }
+        #loading {
+            display: none;
+            text-align: center;
+            font-size: 16px;
+            color: #4CAF50;
+        }
+        .property-list {
+            margin-top: 30px;
+        }
+        .property-item {
+            padding: 10px;
+            border: 1px solid #ddd;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+<header>
+    <h1>Admin Dashboard</h1>
+</header>
+<div class="container">
+    <h2>Add New Property</h2>
+    <form id="upload-form">
+        <div class="form-group">
+            <label for="title">Title</label>
+            <input type="text" id="title" required>
+        </div>
+        <div class="form-group">
+            <label for="price">Price</label>
+            <input type="number" id="price" required>
+        </div>
+        <div class="form-group">
+            <label for="location">Location</label>
+            <input type="text" id="location" required>
+        </div>
+        <div class="form-group">
+            <label for="category">Category</label>
+            <select id="category" required>
+                <option value="">Select Category</option>
+                <option value="lands">Lands</option>
+                <option value="residential">Residential</option>
+                <option value="commercial">Commercial</option>
+                <option value="industrial">Industrial</option>
+                <option value="agriculture">Agriculture</option>
+                <option value="government">Government</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="subcategory">Subcategory</label>
+            <select id="subcategory" required>
+                <option value="">Select Subcategory</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="images">Images</label>
+            <input type="file" id="images" multiple accept="image/*" required>
+        </div>
+        <button type="button" class="btn" id="upload-btn">Upload</button>
+        <div id="loading">Uploading property, please wait...</div>
+    </form>
+    <div class="property-list" id="property-list">
+        <h3>Uploaded Properties</h3>
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
+    import { getDatabase, ref, push, onValue } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js";
+    import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-storage.js";
 
     const firebaseConfig = {
-      apiKey: "AIzaSyBFcaYolaeuZ5QRUt5qS9gTFf4GW-LYIZY",
-      authDomain: "legacy-genuine-properties.firebaseapp.com",
-      databaseURL: "https://legacy-genuine-properties-default-rtdb.firebaseio.com",
-      projectId: "legacy-genuine-properties",
-      storageBucket: "legacy-genuine-properties.appspot.com",
-      messagingSenderId: "795578734998",
-      appId: "1:795578734998:web:5a06078443af3bec4ee5b7",
-      measurementId: "G-RRZ7M9TW8T"
+        apiKey: "AIzaSyBFcaYolaeuZ5QRUt5qS9gTFf4GW-LYIZY",
+        authDomain: "legacy-genuine-properties.firebaseapp.com",
+        databaseURL: "https://legacy-genuine-properties-default-rtdb.firebaseio.com",
+        projectId: "legacy-genuine-properties",
+        storageBucket: "legacy-genuine-properties.appspot.com",
+        messagingSenderId: "795578734998",
+        appId: "1:795578734998:web:5a06078443af3bec4ee5b7",
+        measurementId: "G-RRZ7M9TW8T"
     };
 
-    // Initialize Firebase
     const app = initializeApp(firebaseConfig);
-    const analytics = getAnalytics(app);
     const database = getDatabase(app);
     const storage = getStorage(app);
 
-    document.getElementById("property-form").addEventListener("submit", (e) => {
-      e.preventDefault();
+    const subcategoryData = {
+        lands: ['Residential Lands', 'Commercial Lands', 'Industrial Lands'],
+        residential: ['Apartment', 'Mansionette', 'Bungalows', 'Villas', 'Farmhouse'],
+        commercial: ['Offices', 'Institution', 'Shopping', 'Hotels', 'Special Purpose'],
+        industrial: ['Factories', 'Warehouse Distribution', 'Flexible Spaces', 'Special Purpose'],
+        agriculture: ['Green Homes', 'Flower Homes', 'Flexible Spaces'],
+        government: ['Affordable Homes']
+    };
 
-      const propertyName = document.getElementById("property-name").value;
-      const propertyDescription = document.getElementById("property-description").value;
-      const propertyPrice = document.getElementById("property-price").value;
-      const category = document.getElementById("property-category").value; // Get the category
-      const subcategory = document.getElementById("property-subcategory").value; // Get the subcategory
-      const propertyImage = document.getElementById("property-image").files[0];
+    document.getElementById('category').addEventListener('change', () => {
+        const category = document.getElementById('category').value;
+        const subcategorySelect = document.getElementById('subcategory');
 
-      const imageRef = storageRef(storage, 'images/' + propertyImage.name);
-      uploadBytes(imageRef, propertyImage).then((snapshot) => {
-        return getDownloadURL(snapshot.ref);
-      }).then((downloadURL) => {
-        // Save property details in the correct subcategory path in Firebase
-        const propertyRef = ref(database, `${category}/${subcategory}`);
-        const newPropertyRef = push(propertyRef);
-        set(newPropertyRef, {
-          name: propertyName,
-          description: propertyDescription,
-          price: propertyPrice,
-          imageUrl: downloadURL
-        }).then(() => {
-          alert('Property added successfully!');
-        }).catch((error) => {
-          console.error('Error saving property:', error);
-        });
-      }).catch((error) => {
-        console.error('Error uploading image:', error);
-      });
+        subcategorySelect.innerHTML = '<option value="">Select Subcategory</option>';
+        if (subcategoryData[category]) {
+            subcategoryData[category].forEach(sub => {
+                const option = document.createElement('option');
+                option.value = sub.toLowerCase().replace(/\s+/g, '').replace(/[^a-zA-Z0-9]/g, ''); // Removing spaces and special characters
+                option.textContent = sub;
+                subcategorySelect.appendChild(option);
+            });
+        }
     });
-  </script>
-</head>
-<body>
-  <h2>Admin Panel</h2>
-  <form id="property-form">
-    <label for="property-name">Property Name:</label><br>
-    <input type="text" id="property-name" name="property-name" required><br><br>
 
-    <label for="property-description">Property Description:</label><br>
-    <textarea id="property-description" name="property-description" required></textarea><br><br>
+    document.getElementById('upload-btn').addEventListener('click', async () => {
+        const loadingIndicator = document.getElementById('loading');
+        loadingIndicator.style.display = 'block';
 
-    <label for="property-price">Property Price:</label><br>
-    <input type="number" id="property-price" name="property-price" required><br><br>
+        try {
+            const title = document.getElementById('title').value;
+            const price = document.getElementById('price').value;
+            const location = document.getElementById('location').value;
+            const category = document.getElementById('category').value.toLowerCase().replace(/\s+/g, '').replace(/[^a-zA-Z0-9]/g, ''); // Ensure category format matches Firebase structure
+            const subcategory = document.getElementById('subcategory').value.toLowerCase().replace(/\s+/g, '').replace(/[^a-zA-Z0-9]/g, ''); // Ensure subcategory format matches Firebase structure
+            const files = document.getElementById('images').files;
 
-    <label for="property-category">Category:</label><br>
-    <select id="property-category" name="property-category" required>
-      <option value="Residential">Residential</option>
-      <option value="Commercial">Commercial</option>
-      <option value="Industrial">Industrial</option>
-      <option value="Agriculture">Agriculture</option>
-    </select><br><br>
+            if (!category || !subcategory) {
+                throw new Error('Category or subcategory is missing.');
+            }
 
-    <label for="property-subcategory">Subcategory:</label><br>
-    <select id="property-subcategory" name="property-subcategory" required>
-      <option value="Apartment">Apartment</option>
-      <option value="Mansion">Mansion</option>
-      <option value="Factory">Factory</option>
-      <option value="Warehouse">Warehouse</option>
-    </select><br><br>
+            let imageUrls = [];
+            for (const file of files) {
+                const imgRef = storageRef(storage, `images/${file.name}`);
+                await uploadBytes(imgRef, file);
+                const url = await getDownloadURL(imgRef);
+                imageUrls.push(url);
+            }
 
-    <label for="property-image">Property Image:</label><br>
-    <input type="file" id="property-image" name="property-image" accept="image/*" required><br><br>
+            const newProperty = { title, price, location, imageUrls };
+            const path = `categories/${category}/${subcategory}`; // Correct Firebase path structure
+            await push(ref(database, path), newProperty);
 
-    <input type="submit" value="Add Property">
-  </form>
+            loadProperties(category, subcategory);
+        } catch (error) {
+            console.error(error);
+            alert('Failed to upload property: ' + error.message);
+        } finally {
+            loadingIndicator.style.display = 'none';
+        }
+    });
 
-  <div id="property-list">
-    <h3>Property List</h3>
-    <!-- Property list will be displayed here -->
-  </div>
+    function loadProperties(category, subcategory) {
+        const path = `categories/${category}/${subcategory}`;
+        const propertyRef = ref(database, path);
+        const propertyList = document.getElementById('property-list');
+
+        onValue(propertyRef, (snapshot) => {
+            propertyList.innerHTML = '<h3>Uploaded Properties</h3>';
+            snapshot.forEach(childSnapshot => {
+                const property = childSnapshot.val();
+                const div = document.createElement('div');
+                div.className = 'property-item';
+                div.innerHTML = `
+                    <h4>${property.title}</h4>
+                    <p>Price: ${property.price}</p>
+                    <p>Location: ${property.location}</p>
+                    ${property.imageUrls.map(url => `<img src="${url}" alt="${property.title}" style="max-width: 100px; margin: 5px;">`).join('')}
+                `;
+                propertyList.appendChild(div);
+            });
+        });
+    }
+</script>
 </body>
 </html>
