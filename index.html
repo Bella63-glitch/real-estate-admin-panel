@@ -78,10 +78,10 @@
             color: white;
         }
         .edit-btn {
-            background-color: #28a745; /* Green */
+            background-color: #007BFF;
         }
         .delete-btn {
-            background-color: #dc3545; /* Red */
+            background-color: #FF6347;
         }
     </style>
 </head>
@@ -255,6 +255,7 @@
         document.getElementById('price').value = price;
         document.getElementById('location').value = location;
 
+        // Update the button to say "Update" and change its action
         const uploadBtn = document.getElementById('upload-btn');
         uploadBtn.innerText = 'Update';
         uploadBtn.onclick = async () => {
@@ -271,6 +272,7 @@
                 window.location.reload();
             } catch (error) {
                 console.error('Error updating property:', error);
+                alert('Failed to update property: ' + error.message);
             }
         };
     }
@@ -287,6 +289,7 @@
                 })
                 .catch(error => {
                     console.error('Error deleting property:', error);
+                    alert('Failed to delete property: ' + error.message);
                 });
         }
     }
