@@ -70,18 +70,22 @@
         .property-actions {
             margin-top: 10px;
         }
-        .property-actions button {
-            margin-right: 5px;
+        .edit-btn {
+            background-color: #28a745; /* Green for edit */
+            color: white;
             padding: 5px 10px;
             cursor: pointer;
             border: none;
-            color: white;
-        }
-        .edit-btn {
-            background-color: #007BFF;
+            border-radius: 5px;
+            margin-right: 5px;
         }
         .delete-btn {
-            background-color: #FF6347;
+            background-color: #dc3545; /* Red for delete */
+            color: white;
+            padding: 5px 10px;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
         }
     </style>
 </head>
@@ -232,7 +236,7 @@
             snapshot.forEach(childSnapshot => {
                 const property = childSnapshot.val();
                 const propertyKey = childSnapshot.key;
-
+                
                 const propertyItem = document.createElement('div');
                 propertyItem.classList.add('property-item');
 
@@ -255,10 +259,10 @@
         document.getElementById('price').value = price;
         document.getElementById('location').value = location;
 
-        // Update the button to say "Update" and change its action
-        const uploadBtn = document.getElementById('upload-btn');
-        uploadBtn.innerText = 'Update';
-        uploadBtn.onclick = async () => {
+        // Change button text and click handler
+        const uploadButton = document.getElementById('upload-btn');
+        uploadButton.innerText = 'Update';
+        uploadButton.onclick = async () => {
             const updatedTitle = document.getElementById('title').value;
             const updatedPrice = document.getElementById('price').value;
             const updatedLocation = document.getElementById('location').value;
@@ -272,7 +276,6 @@
                 window.location.reload();
             } catch (error) {
                 console.error('Error updating property:', error);
-                alert('Failed to update property: ' + error.message);
             }
         };
     }
@@ -289,7 +292,6 @@
                 })
                 .catch(error => {
                     console.error('Error deleting property:', error);
-                    alert('Failed to delete property: ' + error.message);
                 });
         }
     }
