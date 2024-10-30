@@ -174,7 +174,7 @@
         if (subcategoryData[category]) {
             subcategoryData[category].forEach(sub => {
                 const option = document.createElement('option');
-                option.value = sub.toLowerCase().replace(/\s+/g, '').replace(/[^a-zA-Z0-9]/g, ''); // Removing spaces and special characters
+                option.value = sub.toLowerCase().replace(/\s+/g, '').replace(/[^a-zA-Z0-9]/g, '');
                 option.textContent = sub;
                 subcategorySelect.appendChild(option);
             });
@@ -190,8 +190,8 @@
             const title = document.getElementById('title').value;
             const price = document.getElementById('price').value;
             const location = document.getElementById('location').value;
-            const category = document.getElementById('category').value.toLowerCase().replace(/\s+/g, '').replace(/[^a-zA-Z0-9]/g, '');
-            const subcategory = document.getElementById('subcategory').value.toLowerCase().replace(/\s+/g, '').replace(/[^a-zA-Z0-9]/g, '');
+            const category = document.getElementById('category').value;
+            const subcategory = document.getElementById('subcategory').value;
             const files = document.getElementById('images').files;
 
             if (!category || !subcategory) {
@@ -210,10 +210,9 @@
             const path = `categories/${category}/${subcategory}`;
             await push(ref(database, path), newProperty);
 
-            // Show success message and refresh the page
             successMessage.style.display = 'block';
             setTimeout(() => {
-                window.location.reload(); // Refresh the page
+                window.location.reload();
             }, 2000);
 
         } catch (error) {
@@ -239,22 +238,41 @@
                 propertyItem.classList.add('property-item');
 
                 propertyItem.innerHTML = `
-              <h4>${property.title}</h4>
-<p>Price: ${property.price}</p>
-<p>Location: ${property.location}</p>
-<div class="property-actions">
-    <button class="edit-btn" onclick="editProperty('${category}', '${subcategory}', '${propertyKey}')">Edit</button>
-    <button class="delete-btn" onclick="deleteProperty('${category}', '${subcategory}', '${propertyKey}')">Delete</button>
-</div>
-</div> <!-- End of property item -->
-`;
-propertyList.insertBefore(propertyItem, propertyList.firstChild); // Insert at the top
+                    <h4>${property.title}</h4>
+                    <p>Price: ${property.price}</p>
+                    <p>Location: ${property.location}</p>
+                    <div class="property-actions<button class="edit-btn" onclick="editProperty('${category}', '${subcategory}', '${propertyKey}', '${property.title}', '${property.price}', '${property.location}')">Edit</button>
+                    <button class="delete-btn" onclick="deleteProperty('${category}', '${subcategory}', '${propertyKey}')">Delete</button>
+                </div>
+            </div>
+        `;
+        propertyList.appendChild(propertyItem);
+    });
 });
-});
-}      
-function editProperty(category, subcategory, propertyKey) {
-    // Implement the edit functionality if needed
-    alert(`Edit property with key: ${propertyKey}`);
+}
+
+function editProperty(category, subcategory, propertyKey, title, price, location) {
+    document.getElementById('title').value = title;
+    document.getElementById('price').value = price;
+    document.getElementById('location').value = location;
+
+    document.getElementById('upload-btn').innerText = 'Update';
+    document.getElementById('upload-btn').onclick = async () => {
+        const updatedTitle = document.getElementById('title').value;
+        const updatedPrice = document.getElementById('price').value;
+        const updatedLocation = document.getElementById('location').value;
+
+        const path = `categories/${category}/${subcategory}/${propertyKey}`;
+        const propertyRef = ref(database, path);
+
+        try {
+            await update(propertyRef, { title: updatedTitle, price: updatedPrice, location: updatedLocation });
+            alert('Property updated successfully!');
+            window.location.reload();
+        } catch (error) {
+            console.error('Error updating property:', error);
+        }
+    };
 }
 
 function deleteProperty(category, subcategory, propertyKey) {
@@ -265,6 +283,7 @@ function deleteProperty(category, subcategory, propertyKey) {
         remove(propertyRef)
             .then(() => {
                 alert('Property deleted successfully.');
+                window.location.reload();
             })
             .catch(error => {
                 console.error('Error deleting property:', error);
@@ -280,4 +299,4 @@ window.onload = () => {
 };
 </script>
 </body>
-    </html>
+</html/>
