@@ -63,15 +63,11 @@
             border: 1px solid #ddd;
             margin-bottom: 10px;
         }
-        .property-item img {
-            max-width: 100px;
-            margin-right: 10px;
-        }
         .property-actions {
             margin-top: 10px;
         }
         .edit-btn {
-            background-color: #28a745; /* Green for edit */
+            background-color: #28a745;
             color: white;
             padding: 5px 10px;
             cursor: pointer;
@@ -80,7 +76,7 @@
             margin-right: 5px;
         }
         .delete-btn {
-            background-color: #dc3545; /* Red for delete */
+            background-color: #dc3545;
             color: white;
             padding: 5px 10px;
             cursor: pointer;
@@ -172,7 +168,6 @@
     document.getElementById('category').addEventListener('change', () => {
         const category = document.getElementById('category').value;
         const subcategorySelect = document.getElementById('subcategory');
-
         subcategorySelect.innerHTML = '<option value="">Select Subcategory</option>';
         if (subcategoryData[category]) {
             subcategoryData[category].forEach(sub => {
@@ -259,7 +254,6 @@
         document.getElementById('price').value = price;
         document.getElementById('location').value = location;
 
-        // Change button text and click handler
         const uploadButton = document.getElementById('upload-btn');
         uploadButton.innerText = 'Update';
         uploadButton.onclick = async () => {
@@ -296,12 +290,12 @@
         }
     }
 
-    // Load the properties when the page loads
     window.onload = () => {
-        const category = 'residential'; // Adjust this depending on what you want to load first
-        const subcategory = 'apartment'; // Adjust as well
+        const category = 'residential'; // Adjust this for default category
+        const subcategory = 'apartment'; // Adjust this for default subcategory
         loadProperties(category, subcategory);
     };
 </script>
 </body>
 </html>
+
