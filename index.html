@@ -63,6 +63,10 @@
             border: 1px solid #ddd;
             margin-bottom: 10px;
         }
+        .property-item img {
+            max-width: 100px;
+            margin-right: 10px;
+        }
         .property-actions {
             margin-top: 10px;
         }
@@ -168,6 +172,7 @@
     document.getElementById('category').addEventListener('change', () => {
         const category = document.getElementById('category').value;
         const subcategorySelect = document.getElementById('subcategory');
+
         subcategorySelect.innerHTML = '<option value="">Select Subcategory</option>';
         if (subcategoryData[category]) {
             subcategoryData[category].forEach(sub => {
@@ -209,9 +214,7 @@
             await push(ref(database, path), newProperty);
 
             successMessage.style.display = 'block';
-            setTimeout(() => {
-                window.location.reload();
-            }, 2000);
+            loadProperties(category, subcategory);
 
         } catch (error) {
             console.error(error);
@@ -231,7 +234,7 @@
             snapshot.forEach(childSnapshot => {
                 const property = childSnapshot.val();
                 const propertyKey = childSnapshot.key;
-                
+
                 const propertyItem = document.createElement('div');
                 propertyItem.classList.add('property-item');
 
@@ -240,8 +243,11 @@
                     <p>Price: ${property.price}</p>
                     <p>Location: ${property.location}</p>
                     <div class="property-actions">
-                        <button class="edit-btn" onclick="editProperty('${category}', '${subcategory}', '${propertyKey}', '${property.title}', '${property.price}', '${property.location}')">Edit</button>
+                        <button class="edit-btn" onclick="editProperty('${category}', '${subcategory}', ${propertyKey}')">Edit</button>
                         <button class="delete-btn" onclick="deleteProperty('${category}', '${subcategory}', '${propertyKey}')">Delete</button>
+                    </div>
+                    <div>
+                        ${property.imageUrls.map(url => `<img src="${url}" alt="Property Image">`).join('')}
                     </div>
                 `;
                 propertyList.appendChild(propertyItem);
@@ -249,53 +255,54 @@
         });
     }
 
-    function editProperty(category, subcategory, propertyKey, title, price, location) {
-        document.getElementById('title').value = title;
-        document.getElementById('price').value = price;
-        document.getElementById('location').value = location;
-
-        const uploadButton = document.getElementById('upload-btn');
-        uploadButton.innerText = 'Update';
-        uploadButton.onclick = async () => {
-            const updatedTitle = document.getElementById('title').value;
-            const updatedPrice = document.getElementById('price').value;
-            const updatedLocation = document.getElementById('location').value;
-
-            const path = `categories/${category}/${subcategory}/${propertyKey}`;
-            const propertyRef = ref(database, path);
-
-            try {
-                await update(propertyRef, { title: updatedTitle, price: updatedPrice, location: updatedLocation });
-                alert('Property updated successfully!');
-                window.location.reload();
-            } catch (error) {
-                console.error('Error updating property:', error);
-            }
-        };
-    }
-
-    function deleteProperty(category, subcategory, propertyKey) {
+    window.deleteProperty = async (category, subcategory, propertyKey) => {
         const path = `categories/${category}/${subcategory}/${propertyKey}`;
-        const propertyRef = ref(database, path);
-
-        if (confirm('Are you sure you want to delete this property?')) {
-            remove(propertyRef)
-                .then(() => {
-                    alert('Property deleted successfully.');
-                    window.location.reload();
-                })
-                .catch(error => {
-                    console.error('Error deleting property:', error);
-                });
+        if (confirm("Are you sure you want to delete this property?")) {
+            try {
+                await remove(ref(database, path));
+                alert("Property deleted successfully.");
+                loadProperties(category, subcategory);
+            } catch (error) {
+                console.error(error);
+                alert("Failed to delete property: " + error.message);
+            }
         }
-    }
-
-    window.onload = () => {
-        const category = 'residential'; // Adjust this for default category
-        const subcategory = 'apartment'; // Adjust this for default subcategory
-        loadProperties(category, subcategory);
     };
+
+    window.editProperty = async (category, subcategory, propertyKey) => {
+        const title = prompt("Enter new title:");
+        const price = prompt("Enter new price:");
+        const location = prompt("Enter new location:");
+
+        if (title && price && location) {
+            const path = `categories/${category}/${subcategory}/${propertyKey}`;
+            try {
+                await update(ref(database, path), { title, price, location });
+                alert("Property updated successfully.");
+                loadProperties(category, subcategory);
+            } catch (error) {
+                console.error(error);
+                alert("Failed to update property: " + error.message);
+            }
+        }
+    };
+
+    document.getElementById("category").addEventListener("change", () => {
+        const category = document.getElementById("category").value;
+        const subcategory = document.getElementById("subcategory").value;
+        if (category && subcategory) {
+            loadProperties(category, subcategory);
+        }
+    });
+
+    document.getElementById("subcategory").addEventListener("change", () => {
+        const category = document.getElementById("category").value;
+        const subcategory = document.getElementById("subcategory").value;
+        if (category && subcategory) {
+            loadProperties(category, subcategory);
+        }
+    });
 </script>
+
 </body>
 </html>
-
