@@ -127,6 +127,20 @@
             </select>
         </div>
         <div class="form-group">
+            <label for="youtube-link">YouTube Link</label>
+            <input type="url" id="youtube-link" placeholder="Enter YouTube video link">
+        </div>
+        <div class="form-group">
+            <label for="status">Status</label>
+            <select id="status" required>
+                <option value="">Select Status</option>
+                <option value="under-offer">Under Offer</option>
+                <option value="sold">Sold</option>
+                <option value="leased">Leased</option>
+                <option value="under-construction">Under Construction</option>
+            </select>
+        </div>
+        <div class="form-group">
             <label for="images">Images</label>
             <input type="file" id="images" multiple accept="image/*" required>
         </div>
@@ -195,10 +209,16 @@
             const location = document.getElementById('location').value;
             const category = document.getElementById('category').value;
             const subcategory = document.getElementById('subcategory').value;
+            const youtubeLink = document.getElementById('youtube-link').value;
+            const status = document.getElementById('status').value;
             const files = document.getElementById('images').files;
 
             if (!category || !subcategory) {
                 throw new Error('Category or subcategory is missing.');
+            }
+
+            if (files.length > 30) {
+                throw new Error('You can only upload up to 30 images.');
             }
 
             let imageUrls = [];
@@ -209,100 +229,103 @@
                 imageUrls.push(url);
             }
 
-            const newProperty = { title, price, location, imageUrls };
-            const path = `categories/${category}/${subcategory}`;
-            await push(ref(database, path), newProperty);
+            const propertyRef = ref(database, 'properties');
+            await push(propertyRef, {
+                title,
+                price,
+                location,
+                category,
+                subcategory,
+                youtubeLink,
+                status,
+                images: imageUrls,
+                timestamp: Date.now()
+            });
 
-            successMessage.style.display = 'block';
-            loadProperties(category, subcategory);
-
-        } catch (error) {
-            console.error(error);
-            alert('Failed to upload property: ' + error.message);
-        } finally {
             loadingIndicator.style.display = 'none';
+            successMessage.style.display = 'block';
+
+            loadProperties(category, subcategory);
+        } catch (error)
+        {
+            loadingIndicator.style.display = 'none';
+            alert(error.message || 'An error occurred.');
         }
     });
 
     function loadProperties(category, subcategory) {
-        const path = `categories/${category}/${subcategory}`;
-        const propertyRef = ref(database, path);
         const propertyList = document.getElementById('property-list');
+        propertyList.innerHTML = ''; // Clear previous property listings
 
+        const propertyRef = ref(database, 'properties');
         onValue(propertyRef, (snapshot) => {
-            propertyList.innerHTML = '<h3>Uploaded Properties</h3>';
-            snapshot.forEach(childSnapshot => {
+            snapshot.forEach((childSnapshot) => {
                 const property = childSnapshot.val();
-                const propertyKey = childSnapshot.key;
+                if (property.category === category && property.subcategory === subcategory) {
+                    const propertyItem = document.createElement('div');
+                    propertyItem.className = 'property-item';
 
-                const propertyItem = document.createElement('div');
-                propertyItem.classList.add('property-item');
+                    const image = document.createElement('img');
+                    image.src = property.images[0]; // Display the first image
+                    propertyItem.appendChild(image);
 
-                propertyItem.innerHTML = `
-                    <h4>${property.title}</h4>
-                    <p>Price: ${property.price}</p>
-                    <p>Location: ${property.location}</p>
-                    <div class="property-actions">
-                        <button class="edit-btn" onclick="editProperty('${category}', '${subcategory}', ${propertyKey}')">Edit</button>
-                        <button class="delete-btn" onclick="deleteProperty('${category}', '${subcategory}', '${propertyKey}')">Delete</button>
-                    </div>
-                    <div>
-                        ${property.imageUrls.map(url => `<img src="${url}" alt="Property Image">`).join('')}
-                    </div>
-                `;
-                propertyList.appendChild(propertyItem);
+                    const title = document.createElement('h4');
+                    title.textContent = property.title;
+                    propertyItem.appendChild(title);
+
+                    const price = document.createElement('p');
+                    price.textContent = `Price: Ksh ${property.price}`;
+                    propertyItem.appendChild(price);
+
+                    const location = document.createElement('p');
+                    location.textContent = `Location: ${property.location}`;
+                    propertyItem.appendChild(location);
+
+                    const status = document.createElement('p');
+                    status.textContent = `Status: ${property.status}`;
+                    propertyItem.appendChild(status);
+
+                    const actions = document.createElement('div');
+                    actions.className = 'property-actions';
+
+                    const editButton = document.createElement('button');
+                    editButton.className = 'edit-btn';
+                    editButton.textContent = 'Edit';
+                    editButton.onclick = () => editProperty(childSnapshot.key, property);
+                    actions.appendChild(editButton);
+
+                    const deleteButton = document.createElement('button');
+                    deleteButton.className = 'delete-btn';
+                    deleteButton.textContent = 'Delete';
+                    deleteButton.onclick = () => deleteProperty(childSnapshot.key);
+                    actions.appendChild(deleteButton);
+
+                    propertyItem.appendChild(actions);
+                    propertyList.appendChild(propertyItem);
+                }
             });
         });
     }
 
-    window.deleteProperty = async (category, subcategory, propertyKey) => {
-        const path = `categories/${category}/${subcategory}/${propertyKey}`;
-        if (confirm("Are you sure you want to delete this property?")) {
-            try {
-                await remove(ref(database, path));
-                alert("Property deleted successfully.");
-                loadProperties(category, subcategory);
-            } catch (error) {
-                console.error(error);
-                alert("Failed to delete property: " + error.message);
-            }
-        }
-    };
+    function editProperty(propertyId, property) {
+        // Implement logic for editing a property (e.g., show a form with the current data filled)
+        alert(`Editing property: ${propertyId}`);
+    }
 
-    window.editProperty = async (category, subcategory, propertyKey) => {
-        const title = prompt("Enter new title:");
-        const price = prompt("Enter new price:");
-        const location = prompt("Enter new location:");
+    function deleteProperty(propertyId) {
+        const propertyRef = ref(database, 'properties/' + propertyId);
+        remove(propertyRef)
+            .then(() => {
+                alert('Property deleted successfully!');
+                loadProperties(document.getElementById('category').value, document.getElementById('subcategory').value);
+            })
+            .catch((error) => {
+                alert('Error deleting property: ' + error.message);
+            });
+    }
 
-        if (title && price && location) {
-            const path = `categories/${category}/${subcategory}/${propertyKey}`;
-            try {
-                await update(ref(database, path), { title, price, location });
-                alert("Property updated successfully.");
-                loadProperties(category, subcategory);
-            } catch (error) {
-                console.error(error);
-                alert("Failed to update property: " + error.message);
-            }
-        }
-    };
-
-    document.getElementById("category").addEventListener("change", () => {
-        const category = document.getElementById("category").value;
-        const subcategory = document.getElementById("subcategory").value;
-        if (category && subcategory) {
-            loadProperties(category, subcategory);
-        }
-    });
-
-    document.getElementById("subcategory").addEventListener("change", () => {
-        const category = document.getElementById("category").value;
-        const subcategory = document.getElementById("subcategory").value;
-        if (category && subcategory) {
-            loadProperties(category, subcategory);
-        }
-    });
+    // Initial load for the property list
+    loadProperties(document.getElementById('category').value, document.getElementById('subcategory').value);
 </script>
-
 </body>
 </html>
