@@ -155,9 +155,9 @@
 </div>
 
 <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
-    import { getDatabase, ref, push, onValue, remove, update } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js";
-    import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-storage.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
+    import { getDatabase, ref, push, onValue, remove } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-database.js";
+    import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-storage.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyBFcaYolaeuZ5QRUt5qS9gTFf4GW-LYIZY",
@@ -166,8 +166,7 @@
         projectId: "legacy-genuine-properties",
         storageBucket: "legacy-genuine-properties.appspot.com",
         messagingSenderId: "795578734998",
-        appId: "1:795578734998:web:5a06078443af3bec4ee5b7",
-        measurementId: "G-RRZ7M9TW8T"
+        appId: "1:795578734998:web:2362b6a12a5e1973dc7d17"
     };
 
     const app = initializeApp(firebaseConfig);
@@ -229,13 +228,11 @@
                 imageUrls.push(url);
             }
 
-            const propertyRef = ref(database, 'properties');
+            const propertyRef = ref(database, `categories/${category}/${subcategory}`);
             await push(propertyRef, {
                 title,
                 price,
                 location,
-                category,
-                subcategory,
                 youtubeLink,
                 status,
                 images: imageUrls,
@@ -245,87 +242,89 @@
             loadingIndicator.style.display = 'none';
             successMessage.style.display = 'block';
 
-            loadProperties(category, subcategory);
-        } catch (error)
-        {
+        } catch (error) {
             loadingIndicator.style.display = 'none';
             alert(error.message || 'An error occurred.');
-        }
-    });
+      }try {
+    // Your try block code  
+        } catch (error) {
+                loadingIndicator.style.display = 'none';
+                alert(error.message || 'An error occurred.');
+            }
+        });
 
-    function loadProperties(category, subcategory) {
-        const propertyList = document.getElementById('property-list');
-        propertyList.innerHTML = ''; // Clear previous property listings
+        function loadProperties(category, subcategory) {
+            const propertyList = document.getElementById('property-list');
+            propertyList.innerHTML = ''; // Clear the list before loading new properties
 
-        const propertyRef = ref(database, 'properties');
-        onValue(propertyRef, (snapshot) => {
-            snapshot.forEach((childSnapshot) => {
-                const property = childSnapshot.val();
-                if (property.category === category && property.subcategory === subcategory) {
+            const propertyRef = ref(database, `categories/${category}/${subcategory}`);
+            onValue(propertyRef, (snapshot) => {
+                if (!snapshot.exists()) {
+                    propertyList.innerHTML = `<p>No properties found in ${subcategory} under ${category}.</p>`;
+                    return;
+                }
+
+                const properties = snapshot.val();
+                for (const propertyId in properties) {
+                    const property = properties[propertyId];
                     const propertyItem = document.createElement('div');
-                    propertyItem.className = 'property-item';
-
-                    const image = document.createElement('img');
-                    image.src = property.images[0]; // Display the first image
-                    propertyItem.appendChild(image);
-
-                    const title = document.createElement('h4');
-                    title.textContent = property.title;
-                    propertyItem.appendChild(title);
-
-                    const price = document.createElement('p');
-                    price.textContent = `Price: Ksh ${property.price}`;
-                    propertyItem.appendChild(price);
-
-                    const location = document.createElement('p');
-                    location.textContent = `Location: ${property.location}`;
-                    propertyItem.appendChild(location);
-
-                    const status = document.createElement('p');
-                    status.textContent = `Status: ${property.status}`;
-                    propertyItem.appendChild(status);
-
-                    const actions = document.createElement('div');
-                    actions.className = 'property-actions';
-
-                    const editButton = document.createElement('button');
-                    editButton.className = 'edit-btn';
-                    editButton.textContent = 'Edit';
-                    editButton.onclick = () => editProperty(childSnapshot.key, property);
-                    actions.appendChild(editButton);
-
-                    const deleteButton = document.createElement('button');
-                    deleteButton.className = 'delete-btn';
-                    deleteButton.textContent = 'Delete';
-                    deleteButton.onclick = () => deleteProperty(childSnapshot.key);
-                    actions.appendChild(deleteButton);
-
-                    propertyItem.appendChild(actions);
+                    propertyItem.classList.add('property-item');
+                    propertyItem.innerHTML = `
+                        <div>
+                            <strong>${property.title}</strong><br>
+                            <span>Price: ${property.price}</span><br>
+                            <span>Location: ${property.location}</span><br>
+                            <span>Status: ${property.status}</span><br>
+                            ${property.youtubeLink ? `<a href="${property.youtubeLink}" target="_blank">View on YouTube</a><br>` : ''}
+                            ${property.images ? property.images.map(img => `<img src="${img}" alt="Property Image">`).join('') : ''}
+                        </div>
+                        <div class="property-actions">
+                            <button class="edit-btn" data-id="${propertyId}" data-category="${category}" data-subcategory="${subcategory}">Edit</button>
+                            <button class="delete-btn" data-id="${propertyId}" data-category="${category}" data-subcategory="${subcategory}">Delete</button>
+                        </div>
+                    `;
                     propertyList.appendChild(propertyItem);
                 }
+
+                attachDeleteListeners(); // Attach delete listeners after rendering the properties
             });
+        }
+
+        function attachDeleteListeners() {
+            const deleteButtons = document.querySelectorAll('.delete-btn');
+            deleteButtons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const propertyId = btn.getAttribute('data-id');
+                    const category = btn.getAttribute('data-category');
+                    const subcategory = btn.getAttribute('data-subcategory');
+
+                    if (confirm('Are you sure you want to delete this property?')) {
+                        const propertyRef = ref(database, `categories/${category}/${subcategory}/${propertyId}`);
+                        remove(propertyRef)
+                            .then(() => {
+                                alert('Property deleted successfully.');
+                                loadProperties(category, subcategory);
+                            })
+                            .catch((err) => {
+                                alert(`Error deleting property: ${err.message}`);
+                            });
+                    }
+                });
+            });
+        }
+
+        // Initial load for properties when the page loads
+        document.getElementById('category').addEventListener('change', () => {
+            const category = document.getElementById('category').value;
+            const subcategory = document.getElementById('subcategory').value;
+            loadProperties(category, subcategory);
         });
-    }
 
-    function editProperty(propertyId, property) {
-        // Implement logic for editing a property (e.g., show a form with the current data filled)
-        alert(`Editing property: ${propertyId}`);
-    }
-
-    function deleteProperty(propertyId) {
-        const propertyRef = ref(database, 'properties/' + propertyId);
-        remove(propertyRef)
-            .then(() => {
-                alert('Property deleted successfully!');
-                loadProperties(document.getElementById('category').value, document.getElementById('subcategory').value);
-            })
-            .catch((error) => {
-                alert('Error deleting property: ' + error.message);
-            });
-    }
-
-    // Initial load for the property list
-    loadProperties(document.getElementById('category').value, document.getElementById('subcategory').value);
-</script>
+        document.getElementById('subcategory').addEventListener('change', () => {
+            const category = document.getElementById('category').value;
+            const subcategory = document.getElementById('subcategory').value;
+            loadProperties(category, subcategory);
+        });
+    </script>
 </body>
 </html>
