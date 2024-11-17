@@ -237,94 +237,76 @@
                 status,
                 images: imageUrls,
                 timestamp: Date.now()
-            });
-
-            loadingIndicator.style.display = 'none';
-            successMessage.style.display = 'block';
-
-        } catch (error) {
-            loadingIndicator.style.display = 'none';
-            alert(error.message || 'An error occurred.');
-      }try {
-    // Your try block code  
-        } catch (error) {
-                loadingIndicator.style.display = 'none';
-                alert(error.message || 'An error occurred.');
-            }
         });
 
-        function loadProperties(category, subcategory) {
-            const propertyList = document.getElementById('property-list');
-            propertyList.innerHTML = ''; // Clear the list before loading new properties
+        successMessage.style.display = 'block';
+        loadingIndicator.style.display = 'none';
+        document.getElementById('upload-form').reset();
+    } catch (error) {
+        loadingIndicator.style.display = 'none';
+        alert(error.message);
+    }
+});
 
-            const propertyRef = ref(database, `categories/${category}/${subcategory}`);
-            onValue(propertyRef, (snapshot) => {
-                if (!snapshot.exists()) {
-                    propertyList.innerHTML = `<p>No properties found in ${subcategory} under ${category}.</p>`;
-                    return;
-                }
+// Display Uploaded Properties
+const propertyList = document.getElementById('property-list');
 
-                const properties = snapshot.val();
-                for (const propertyId in properties) {
-                    const property = properties[propertyId];
-                    const propertyItem = document.createElement('div');
-                    propertyItem.classList.add('property-item');
-                    propertyItem.innerHTML = `
-                        <div>
-                            <strong>${property.title}</strong><br>
-                            <span>Price: ${property.price}</span><br>
-                            <span>Location: ${property.location}</span><br>
-                            <span>Status: ${property.status}</span><br>
-                            ${property.youtubeLink ? `<a href="${property.youtubeLink}" target="_blank">View on YouTube</a><br>` : ''}
-                            ${property.images ? property.images.map(img => `<img src="${img}" alt="Property Image">`).join('') : ''}
-                        </div>
-                        <div class="property-actions">
-                            <button class="edit-btn" data-id="${propertyId}" data-category="${category}" data-subcategory="${subcategory}">Edit</button>
-                            <button class="delete-btn" data-id="${propertyId}" data-category="${category}" data-subcategory="${subcategory}">Delete</button>
-                        </div>
-                    `;
-                    propertyList.appendChild(propertyItem);
-                }
+const displayProperties = () => {
+    propertyList.innerHTML = '<h3>Uploaded Properties</h3>';
 
-                attachDeleteListeners(); // Attach delete listeners after rendering the properties
-            });
-        }
-
-        function attachDeleteListeners() {
-            const deleteButtons = document.querySelectorAll('.delete-btn');
-            deleteButtons.forEach(btn => {
-                btn.addEventListener('click', () => {
-                    const propertyId = btn.getAttribute('data-id');
-                    const category = btn.getAttribute('data-category');
-                    const subcategory = btn.getAttribute('data-subcategory');
-
-                    if (confirm('Are you sure you want to delete this property?')) {
-                        const propertyRef = ref(database, `categories/${category}/${subcategory}/${propertyId}`);
-                        remove(propertyRef)
-                            .then(() => {
-                                alert('Property deleted successfully.');
-                                loadProperties(category, subcategory);
-                            })
-                            .catch((err) => {
-                                alert(`Error deleting property: ${err.message}`);
-                            });
+    const categoriesRef = ref(database, 'categories');
+    onValue(categoriesRef, (snapshot) => {
+        const data = snapshot.val();
+        if (data) {
+            for (const [category, subcategories] of Object.entries(data)) {
+                for (const [subcategory, properties] of Object.entries(subcategories)) {
+                    for (const [propertyId, property] of Object.entries(properties)) {
+                        const propertyDiv = document.createElement('div');
+                        propertyDiv.classList.add('property-item');
+                        propertyDiv.innerHTML = `
+                            <h4>${property.title}</h4>
+                            <p><strong>Price:</strong> ${property.price}</p>
+                            <p><strong>Location:</strong> ${property.location}</p>
+                            <p><strong>Category:</strong> ${category}</p>
+                            <p><strong>Subcategory:</strong> ${subcategory}</p>
+                            <p><strong>Status:</strong> ${property.status}</p>
+                            ${property.youtubeLink ? `<p><strong>Video:</strong> <a href="${property.youtubeLink}" target="_blank">Watch Video</a></p>` : ''}
+                            <div class="property-images">
+                                ${property.images ? property.images.map(img => `<img src="${img}" alt="Property Image">`).join('') : ''}
+                            </div>
+                            <div class="property-actions">
+                                <button class="delete-btn" data-category="${category}" data-subcategory="${subcategory}" data-id="${propertyId}">Delete</button>
+                            </div>
+                        `;
+                        propertyList.appendChild(propertyDiv);
                     }
-                });
-            });
+                }
+            }
+        } else {
+            propertyList.innerHTML += '<p>No properties found.</p>';
         }
+    });
+};
 
-        // Initial load for properties when the page loads
-        document.getElementById('category').addEventListener('change', () => {
-            const category = document.getElementById('category').value;
-            const subcategory = document.getElementById('subcategory').value;
-            loadProperties(category, subcategory);
-        });
+displayProperties();
 
-        document.getElementById('subcategory').addEventListener('change', () => {
-            const category = document.getElementById('category').value;
-            const subcategory = document.getElementById('subcategory').value;
-            loadProperties(category, subcategory);
-        });
-    </script>
+// Delete Property
+propertyList.addEventListener('click', async (event) => {
+    if (event.target.classList.contains('delete-btn')) {
+        const category = event.target.getAttribute('data-category');
+        const subcategory = event.target.getAttribute('data-subcategory');
+        const propertyId = event.target.getAttribute('data-id');
+
+        const propertyRef = ref(database, `categories/${category}/${subcategory}/${propertyId}`);
+        try {
+            await remove(propertyRef);
+            alert('Property deleted successfully.');
+            displayProperties();
+        } catch (error) {
+            alert('Failed to delete property: ' + error.message);
+        }
+    }
+});
+</script>
 </body>
-</html>
+    </html>
