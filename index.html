@@ -228,16 +228,16 @@
             }
 
             const propertyRef = ref(database, `categories/${category}/${subcategory}`);
-            await push(propertyRef, {
-                title,
-                price,
-                location,
-                youtubeLink,
-                status,
-                images: imageUrls,
-                timestamp: Date.now()
-            });
-
+             await push(propertyRef, {
+    title,
+    price,
+    location,
+    youtubeLink,
+    status,
+    images: imageUrls,
+    timestamp: Date.now(),
+    description // Add this line
+});
             successMessage.style.display = 'block';
             loadingIndicator.style.display = 'none';
             document.getElementById('upload-form').reset();
@@ -333,4 +333,7 @@
             }
         }
     });
-</script>
+                                                  </script>
+
+
+
