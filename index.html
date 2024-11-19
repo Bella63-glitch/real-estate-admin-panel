@@ -31,10 +31,13 @@
             display: block;
             margin-bottom: 5px;
         }
-        .form-group input, .form-group textarea, .form-group select {
+        .form-group input, .form-group select, .form-group textarea {
             width: 100%;
             padding: 8px;
             box-sizing: border-box;
+        }
+        .form-group textarea {
+            height: 100px;
         }
         .btn {
             background-color: #4CAF50;
@@ -70,7 +73,7 @@
         .property-actions {
             margin-top: 10px;
         }
-        .edit-btn {
+        .edit-btn, .delete-btn {
             background-color: #28a745;
             color: white;
             padding: 5px 10px;
@@ -81,11 +84,6 @@
         }
         .delete-btn {
             background-color: #dc3545;
-            color: white;
-            padding: 5px 10px;
-            cursor: pointer;
-            border: none;
-            border-radius: 5px;
         }
     </style>
 </head>
@@ -99,10 +97,6 @@
         <div class="form-group">
             <label for="title">Title</label>
             <input type="text" id="title" required>
-        </div>
-        <div class="form-group">
-            <label for="description">Description</label>
-            <textarea id="description" rows="4" placeholder="Provide a detailed description of the property" required></textarea>
         </div>
         <div class="form-group">
             <label for="price">Price</label>
@@ -129,6 +123,10 @@
             <select id="subcategory" required>
                 <option value="">Select Subcategory</option>
             </select>
+        </div>
+        <div class="form-group">
+            <label for="description">Description</label>
+            <textarea id="description" placeholder="Enter property description" required></textarea>
         </div>
         <div class="form-group">
             <label for="youtube-link">YouTube Link</label>
@@ -159,30 +157,180 @@
 </div>
 
 <script type="module">
-    const categoryToSubcategories = {
-        lands: ["Commercial Lands", "Industrial Lands", "Residential Lands"],
-        residential: ["Apartment", "Bungalow", "Farmhouse", "Mansionette", "Villas"],
-        commercial: ["Hotels", "Institution", "Offices", "Shopping", "Special Purpose"],
-        industrial: ["Factories", "Flexible Spaces", "Special Purpose", "Warehouse Distribution"],
-        agriculture: ["Flexible Spaces", "Flower Homes", "Green Homes"],
-        government: ["Affordable Homes"],
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
+    import { getDatabase, ref, push, onValue, remove, update } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-database.js";
+    import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-storage.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyBFcaYolaeuZ5QRUt5qS9gTFf4GW-LYIZY",
+        authDomain: "legacy-genuine-properties.firebaseapp.com",
+        databaseURL: "https://legacy-genuine-properties-default-rtdb.firebaseio.com",
+        projectId: "legacy-genuine-properties",
+        storageBucket: "legacy-genuine-properties.appspot.com",
+        messagingSenderId: "795578734998",
+        appId: "1:795578734998:web:2362b6a12a5e1973dc7d17"
     };
 
-    const categorySelect = document.getElementById("category");
-    const subcategorySelect = document.getElementById("subcategory");
+    const app = initializeApp(firebaseConfig);
+    const database = getDatabase(app);
+    const storage = getStorage(app);
 
-    categorySelect.addEventListener("change", () => {
-        const selectedCategory = categorySelect.value;
+    const subcategoryData = {
+        lands: ['Residential Lands', 'Commercial Lands', 'Industrial Lands'],
+        residential: ['Apartment', 'Mansionette', 'Bungalows', 'Villas', 'Farmhouse'],
+        commercial: ['Offices', 'Institution', 'Shopping', 'Hotels', 'Special Purpose'],
+        industrial: ['Factories', 'Warehouse Distribution', 'Flexible Spaces', 'Special Purpose'],
+        agriculture: ['Green Homes', 'Flower Homes', 'Flexible Spaces'],
+        government: ['Affordable Homes']
+    };
+
+    document.getElementById('category').addEventListener('change', () => {
+        const category = document.getElementById('category').value;
+        const subcategorySelect = document.getElementById('subcategory');
+
         subcategorySelect.innerHTML = '<option value="">Select Subcategory</option>';
-        if (selectedCategory && categoryToSubcategories[selectedCategory]) {
-            categoryToSubcategories[selectedCategory].forEach((subcategory) => {
-                const option = document.createElement("option");
-                option.value = subcategory.toLowerCase().replace(/\s+/g, "-");
-                option.textContent = subcategory;
+        if (subcategoryData[category]) {
+            subcategoryData[category].forEach(sub => {
+                const option = document.createElement('option');
+                option.value = sub.toLowerCase().replace(/\s+/g, '').replace(/[^a-zA-Z0-9]/g, '');
+                option.textContent = sub;
                 subcategorySelect.appendChild(option);
             });
         }
     });
+
+    document.getElementById('upload-btn').addEventListener('click', async () => {
+        const loadingIndicator = document.getElementById('loading');
+        const successMessage = document.getElementById('success-message');
+        loadingIndicator.style.display = 'block';
+
+        try {
+            const title = document.getElementById('title').value;
+            const price = document.getElementById('price').value;
+            const location = document.getElementById('location').value;
+            const category = document.getElementById('category').value;
+            const subcategory = document.getElementById('subcategory').value;
+            const description = document.getElementById('description').value;
+            const youtubeLink = document.getElementById('youtube-link').value;
+            const status = document.getElementById('status').value;
+            const files = document.getElementById('images').files;
+
+            if (!category || !subcategory) {
+                throw new Error('You can only upload up to 30 images.');
+            }
+
+            let imageUrls = [];
+            for (const file of files) {
+                const imgRef = storageRef(storage, `images/${file.name}`);
+                await uploadBytes(imgRef, file);
+                const url = await getDownloadURL(imgRef);
+                imageUrls.push(url);
+            }
+
+            const propertyRef = ref(database, `categories/${category}/${subcategory}`);
+            await push(propertyRef, {
+                title,
+                price,
+                location,
+                youtubeLink,
+                status,
+                images: imageUrls,
+                timestamp: Date.now()
+            });
+
+            successMessage.style.display = 'block';
+            loadingIndicator.style.display = 'none';
+            document.getElementById('upload-form').reset();
+        } catch (error) {
+            loadingIndicator.style.display = 'none';
+            alert(error.message);
+        }
+    });
+
+    // Display Uploaded Properties
+    const propertyList = document.getElementById('property-list');
+
+    const displayProperties = () => {
+        propertyList.innerHTML = '<h3>Uploaded Properties</h3>';
+
+        const categoriesRef = ref(database, 'categories');
+        onValue(categoriesRef, (snapshot) => {
+            const data = snapshot.val();
+            if (data) {
+                for (const [category, subcategories] of Object.entries(data)) {
+                    for (const [subcategory, properties] of Object.entries(subcategories)) {
+                        // Sort properties by timestamp (newest first)
+                        const sortedProperties = Object.entries(properties).sort((a, b) => b[1].timestamp - a[1].timestamp);
+                        
+                        sortedProperties.forEach(([propertyId, property]) => {
+                            const propertyDiv = document.createElement('div');
+                            propertyDiv.classList.add('property-item');
+                            propertyDiv.innerHTML = `
+                                <h4>${property.title}</h4>
+                                <p><strong>Price:</strong> ${property.price}</p>
+                                <p><strong>Location:</strong> ${property.location}</p>
+                                <p><strong>Category:</strong> ${category}</p>
+                                <p><strong>Subcategory:</strong> ${subcategory}</p>
+                                <p><strong>Status:</strong> ${property.status}</p>
+                                ${property.youtubeLink ? `<p><strong>Video:</strong> <a href="${property.youtubeLink}" target="_blank">Watch Video</a></p>` : ''}
+                                <div class="property-images">
+                                    ${property.images ? property.images.map(img => `<img src="${img}" alt="Property Image">`).join('') : ''}
+                                </div>
+                                <div class="property-actions">
+                                    <button class="edit-btn" data-category="${category}" data-subcategory="${subcategory}" data-id="${propertyId}">Edit</button>
+                                    <button class="delete-btn" data-category="${category}" data-subcategory="${subcategory}" data-id="${propertyId}">Delete</button>
+                                </div>
+                            `;
+                            propertyList.appendChild(propertyDiv);
+                        });
+                    }
+                }
+            } else {
+                propertyList.innerHTML += '<p>No properties found.</p>';
+            }
+        });
+    };
+
+    displayProperties();
+
+    // Edit Property
+    propertyList.addEventListener('click', async (event) => {
+        if (event.target.classList.contains('edit-btn')) {
+            const category = event.target.getAttribute('data-category');
+            const subcategory = event.target.getAttribute('data-subcategory');
+            const propertyId = event.target.getAttribute('data-id');
+
+            const propertyRef = ref(database, `categories/${category}/${subcategory}/${propertyId}`);
+            const propertySnapshot = await get(propertyRef);
+            const property = propertySnapshot.val();
+
+            if (property) {
+                document.getElementById('title').value = property.title;
+                document.getElementById('price').value = property.price;
+                document.getElementById('location').value = property.location;
+                document.getElementById('category').value = category;
+                document.getElementById('subcategory').value = subcategory;
+                document.getElementById('description').value = property.description || '';
+                document.getElementById('youtube-link').value = property.youtubeLink || '';
+                document.getElementById('status').value = property.status;
+                // You would need to handle image updates separately.
+            }
+        }
+
+        // Delete Property
+        if (event.target.classList.contains('delete-btn')) {
+            const category = event.target.getAttribute('data-category');
+            const subcategory = event.target.getAttribute('data-subcategory');
+            const propertyId = event.target.getAttribute('data-id');
+
+            const propertyRef = ref(database, `categories/${category}/${subcategory}/${propertyId}`);
+            try {
+                await remove(propertyRef);
+                alert('Property deleted successfully.');
+                displayProperties();
+            } catch (error) {
+                alert('Failed to delete property: ' + error.message);
+            }
+        }
+    });
 </script>
-</body>
-</html>
